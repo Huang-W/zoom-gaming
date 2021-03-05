@@ -25,7 +25,7 @@ protoc \
     --go_out=game/ \
     --go_opt=paths=source_relative \
     --proto_path=proto/ \
-    proto/signaling/signaling.proto proto/input/input.proto
+    proto/signaling/signaling.proto
 ```
 
 #### Tests

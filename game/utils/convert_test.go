@@ -28,17 +28,17 @@ func TestRTCIceServerTypeMatch(t *testing.T) {
 
 	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
-		t.Errorf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
 
 	err = ConvertToProtoMessage(&s2, s3.ProtoReflect())
 	if err != nil {
-		t.Errorf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
 	}
 
 	// check equality
 	if !proto.Equal(s1.ProtoReflect().Interface(), s3.ProtoReflect().Interface()) {
-		t.Errorf("Want equality between s1 and s3")
+		t.Fatalf("Want equality between s1 and s3")
 	}
 }
 
@@ -71,17 +71,17 @@ a=rtpmap:32 MPV/90000`,
 
 	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
-		t.Errorf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
 
 	err = ConvertToProtoMessage(&s2, s3.ProtoReflect())
 	if err != nil {
-		t.Errorf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
 	}
 
 	// check equality
 	if !proto.Equal(s1.ProtoReflect().Interface(), s3.ProtoReflect().Interface()) {
-		t.Errorf("Want equality between s1 and s3")
+		t.Fatalf("Want equality between s1 and s3")
 	}
 }
 
@@ -103,16 +103,35 @@ func TestRTCIceCandidateTypeMatch(t *testing.T) {
 
 	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
-		t.Errorf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
 
 	err = ConvertToProtoMessage(&s2, s3.ProtoReflect())
 	if err != nil {
-		t.Errorf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
+		t.Fatalf("Converting from s2 to s3 was unsuccessful - %s", err.Error())
 	}
 
 	// check equality
 	if !proto.Equal(s1.ProtoReflect().Interface(), s3.ProtoReflect().Interface()) {
-		t.Errorf("Want equality between s1 and s3")
+		t.Fatalf("Want equality between s1 and s3")
+	}
+}
+
+func TestProtoTypeMismatch(t *testing.T) {
+
+	var (
+		wrapper *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
+		test pb.WebSocketMessage
+		err error
+	)
+
+	err = ConvertFromProtoMessage(wrapper.ProtoReflect(), &test)
+	if err == nil {
+		t.Errorf("Expected ConvertFrom() test to fail")
+	}
+
+	err = ConvertToProtoMessage(&test, wrapper.ProtoReflect())
+	if err == nil {
+		t.Errorf("Expected ConvertTo() test to fail")
 	}
 }

@@ -22,10 +22,10 @@ var (
 	umo = pj.UnmarshalOptions{}
 
 	// mapping of protobuf types to pion/webrtc types
-	mapping = map[reflect.Type]reflect.Type{
-		reflect.TypeOf((*pb.RTCIceServer)(nil)): reflect.TypeOf((*webrtc.ICEServer)(nil)),
-		reflect.TypeOf((*pb.SessionDescription)(nil)): reflect.TypeOf((*webrtc.SessionDescription)(nil)),
-		reflect.TypeOf((*pb.RTCIceCandidateInit)(nil)): reflect.TypeOf((*webrtc.ICECandidateInit)(nil)),
+	mapping = map[pref.MessageType]reflect.Type{
+		(*pb.RTCIceServer)(nil).ProtoReflect().Type(): reflect.TypeOf((*webrtc.ICEServer)(nil)),
+		(*pb.SessionDescription)(nil).ProtoReflect().Type(): reflect.TypeOf((*webrtc.SessionDescription)(nil)),
+		(*pb.RTCIceCandidateInit)(nil).ProtoReflect().Type(): reflect.TypeOf((*webrtc.ICECandidateInit)(nil)),
 	}
 )
 
@@ -37,22 +37,21 @@ func ConvertFromProtoMessage(m pref.Message, dest interface{}) error {
 		expectedType reflect.Type
 
 		// protobuf
-		proto_message pref.ProtoMessage = m.Interface()
-		proto_message_type reflect.Type = reflect.TypeOf(proto_message)
+		proto_message_type pref.MessageType = m.Type()
 	)
 
 	expectedType, present := mapping[proto_message_type]
 	if !present {
 
-		return errors.New(fmt.Sprintf("Unsupport protobuf type of %T", proto_message_type))
+		return errors.New(fmt.Sprintf("Unsupported protobuf type of %T", proto_message_type.Zero()))
 
 	} else if expectedType != actualType {
 
-		return errors.New(fmt.Sprintf("Type mismatch - Expected: %T - Actual: %T", expectedType, actualType))
+		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %s", expectedType.String(), actualType.String()))
 	}
 
 	// protobuf message in wire form
-	b, err := mo.Marshal(proto_message)
+	b, err := mo.Marshal(m.Interface())
 	if err != nil {
 		return err
 	}
@@ -73,18 +72,17 @@ func ConvertToProtoMessage(orig interface{}, m pref.Message) error {
 		expectedType reflect.Type
 
 		// protobuf
-		proto_message pref.ProtoMessage = m.Interface()
-		proto_message_type reflect.Type = reflect.TypeOf(proto_message)
+		proto_message_type pref.MessageType = m.Type()
 	)
 
 	expectedType, present := mapping[proto_message_type]
 	if !present {
 
-		return errors.New(fmt.Sprintf("Unsupport protobuf type of %T", proto_message_type))
+		return errors.New(fmt.Sprintf("Unsupported protobuf type of %T", proto_message_type.Zero()))
 
 	} else if expectedType != actualType {
 
-		return errors.New(fmt.Sprintf("Type mismatch - Expected: %T - Actual: %T", expectedType, actualType))
+		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %s", expectedType.String(), actualType.String()))
 	}
 
 	// protobuf message in wire form
@@ -93,7 +91,7 @@ func ConvertToProtoMessage(orig interface{}, m pref.Message) error {
 		return err
 	}
 
-	err = pj.Unmarshal(b, proto_message)
+	err = pj.Unmarshal(b, m.Interface())
 	if err != nil {
 		return err
 	}
