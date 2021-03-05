@@ -15,6 +15,6 @@ func FailOnError(err error, msg string) {
 
 func WarnOnError(err error, msg string) {
 	if err != nil {
-		log.Println("%s: %s", msg, err)
+		log.Printf("%s: %s", msg, err)
 	}
 }
