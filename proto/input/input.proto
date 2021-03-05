@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option go_package = "zoomgaming/input";
+
+package input;
+
+// Contains input-related message definitions for both browser-client and server
+//
+// For use with WebRTC data channel (no gRPC service definition needed)
