@@ -192,8 +192,8 @@ func (*WebSocketMessage_RtcIceCandidateInit) isWebSocketMessage_Event() {}
 
 // https://developer.mozilla.org/en-US/docs/Web/API/RTCIceServer
 //
-// for shared TURN server between Client and Server
-// could add additional fields for STUN server
+// for shared STUN server between Client and Server
+// could add additional fields for TURN server
 type RTCIceServer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

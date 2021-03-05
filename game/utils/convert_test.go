@@ -120,17 +120,31 @@ func TestRTCIceCandidateTypeMatch(t *testing.T) {
 func TestProtoTypeMismatch(t *testing.T) {
 
 	var (
-		wrapper *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
-		test pb.WebSocketMessage
+		type1 *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
+		type2 pb.WebSocketMessage
+		type3 pb.RTCIceServer = pb.RTCIceServer{
+			Urls: []string{"stun:stun.l.google.com:19302"},
+		}
+		type4 webrtc.ICECandidateInit
 		err error
 	)
 
-	err = ConvertFromProtoMessage(wrapper.ProtoReflect(), &test)
+	// Test unsupported protobuf message types
+	err = ConvertFromProtoMessage(type1.ProtoReflect(), &type2)
 	if err == nil {
 		t.Errorf("Expected ConvertFrom() test to fail")
 	}
+	err = ConvertToProtoMessage(&type2, type1.ProtoReflect())
+	if err == nil {
+		t.Errorf("Expected ConvertTo() test to fail")
+	}
 
-	err = ConvertToProtoMessage(&test, wrapper.ProtoReflect())
+	// Test supported protobuf message with type mismatch
+	err = ConvertFromProtoMessage(type3.ProtoReflect(), &type4)
+	if err == nil {
+		t.Errorf("Expected ConvertFrom() test to fail")
+	}
+	err = ConvertToProtoMessage(&type4, type3.ProtoReflect())
 	if err == nil {
 		t.Errorf("Expected ConvertTo() test to fail")
 	}
