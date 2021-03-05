@@ -19,10 +19,5 @@ protoc \
     --js_out=import_style=commonjs:web/public/js/ \
     --go_out=game/ \
     --go_opt=paths=source_relative \
-    --proto_path=proto/ \
-    proto/signaling/signaling.proto
+    proto/websocket.proto
 ```
-
-#### Tests
-
-- `go test -v zoomgaming/utils`

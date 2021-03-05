@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "zoomgaming/signaling";
+option go_package = "zoomgaming/proto";
 
 package signaling;
 

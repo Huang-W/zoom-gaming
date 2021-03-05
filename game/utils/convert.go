@@ -11,7 +11,7 @@ import (
 
 	webrtc "github.com/pion/webrtc/v3"
 
-	pb "zoomgaming/signaling"
+	pb "zoomgaming/proto"
 )
 
 var (

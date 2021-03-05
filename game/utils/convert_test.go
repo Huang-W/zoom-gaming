@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	pb "zoomgaming/signaling"
+	pb "zoomgaming/proto"
 
 	webrtc "github.com/pion/webrtc/v3"
 
