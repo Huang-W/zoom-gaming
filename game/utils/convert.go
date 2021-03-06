@@ -30,18 +30,13 @@ var (
 )
 
 func ConvertFromProtoMessage(m pref.Message, dest interface{}) error {
-	var (
-		// used to compare types
-		value reflect.Value = reflect.ValueOf(dest)
-		expectedType reflect.Type
-		// protobuf
-		proto_message_type pref.MessageType = m.Type()
-	)
 
-	expectedType, present := mapping[proto_message_type]
+	expectedType, present := mapping[m.Type()]
+
 	if !present {
 		return errors.New(fmt.Sprintf("Unsupported protobuf type of %T", m.Interface()))
-	} else if expectedType != value.Type() {
+
+	} else if expectedType != reflect.ValueOf(dest).Type() {
 		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %T", expectedType, dest))
 	}
 
@@ -60,19 +55,14 @@ func ConvertFromProtoMessage(m pref.Message, dest interface{}) error {
 }
 
 func ConvertToProtoMessage(orig interface{}, m pref.Message) error {
-	var (
-		// used to compare types
-		value reflect.Value = reflect.ValueOf(dest)
-		expectedType reflect.Type
-		// protobuf
-		proto_message_type pref.MessageType = m.Type()
-	)
 
-	expectedType, present := mapping[proto_message_type]
+	expectedType, present := mapping[m.Type()]
+
 	if !present {
 		return errors.New(fmt.Sprintf("Unsupported protobuf type of %T", m.Interface()))
-	} else if expectedType != value.Type() {
-		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %T", expectedType, dest))
+
+	} else if expectedType != reflect.ValueOf(orig).Type() {
+		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %T", expectedType, orig))
 	}
 
 	// protobuf message in wire form

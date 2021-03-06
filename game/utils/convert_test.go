@@ -18,14 +18,13 @@ func TestRTCIceServerTypeConversion(t *testing.T) {
 		s1  pb.RTCIceServer
 		s2  webrtc.ICEServer
 		s3  pb.RTCIceServer
-		err error
 	)
 
 	s1 = pb.RTCIceServer{
 		Urls: []string{"stun:stun.l.google.com:19302"},
 	}
 
-	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
+	err := ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
 		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
@@ -49,7 +48,6 @@ func TestRTCSessionDescriptionTypeConversion(t *testing.T) {
 		s1  pb.SessionDescription
 		s2  webrtc.SessionDescription
 		s3  pb.SessionDescription
-		err error
 	)
 
 	s1 = pb.SessionDescription{
@@ -67,7 +65,7 @@ m=video 53000 RTP/AVP 32
 a=rtpmap:32 MPV/90000`,
 	}
 
-	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
+	err := ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
 		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
@@ -88,7 +86,6 @@ func TestRTCIceCandidateTypeConversion(t *testing.T) {
 		s1  pb.RTCIceCandidateInit
 		s2  webrtc.ICECandidateInit
 		s3  pb.RTCIceCandidateInit
-		err error
 	)
 
 	s1 = pb.RTCIceCandidateInit{
@@ -98,7 +95,7 @@ func TestRTCIceCandidateTypeConversion(t *testing.T) {
 		UsernameFragment: "CsxzEWmoKpJyscFj",
 	}
 
-	err = ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
+	err := ConvertFromProtoMessage(s1.ProtoReflect(), &s2)
 	if err != nil {
 		t.Fatalf("Converting from s1 to s2 was unsuccessful - %s", err.Error())
 	}
@@ -116,17 +113,16 @@ func TestRTCIceCandidateTypeConversion(t *testing.T) {
 
 func TestUnsupportedProtobufType(t *testing.T) {
 	var (
-		type1 *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
-		type2 pb.WebSocketMessage
-		err error
+		s1 *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
+		s2 *pb.WebSocketMessage
 	)
 
 	// Test unsupported protobuf message types
-	err = ConvertFromProtoMessage(type1.ProtoReflect(), &type2)
+	err := ConvertFromProtoMessage(s1.ProtoReflect(), s2)
 	if err == nil {
 		t.Errorf("Expected ConvertFrom() test to fail")
 	}
-	err = ConvertToProtoMessage(&type2, type1.ProtoReflect())
+	err = ConvertToProtoMessage(s2, s1.ProtoReflect())
 	if err == nil {
 		t.Errorf("Expected ConvertTo() test to fail")
 	}
@@ -134,19 +130,20 @@ func TestUnsupportedProtobufType(t *testing.T) {
 
 func TestTypeMismatch(t *testing.T) {
 	var (
-		type1 pb.RTCIceServer = pb.RTCIceServer{
-			Urls: []string{"stun:stun.l.google.com:19302"},
-		}
-		type2 webrtc.ICECandidateInit
-		err error
+		s1 pb.RTCIceServer
+		s2 *webrtc.ICECandidateInit
 	)
 
+	s1 = pb.RTCIceServer{
+		Urls: []string{"stun:stun.l.google.com:19302"},
+	}
+
 	// Test supported protobuf message with type mismatch
-	err = ConvertFromProtoMessage(type1.ProtoReflect(), &type2)
+	err := ConvertFromProtoMessage(s1.ProtoReflect(), s2)
 	if err == nil {
 		t.Errorf("Expected ConvertFrom() test to fail")
 	}
-	err = ConvertToProtoMessage(&type2, type1.ProtoReflect())
+	err = ConvertToProtoMessage(s2, s1.ProtoReflect())
 	if err == nil {
 		t.Errorf("Expected ConvertTo() test to fail")
 	}
