@@ -13,8 +13,7 @@ import (
 // Make sure that the proto-generated types can be converted into pion types
 //
 // webrtc.ICEServer - pb.RTCIceServer
-func TestRTCIceServerTypeMatch(t *testing.T) {
-
+func TestRTCIceServerTypeConversion(t *testing.T) {
 	var (
 		s1  pb.RTCIceServer
 		s2  webrtc.ICEServer
@@ -45,8 +44,7 @@ func TestRTCIceServerTypeMatch(t *testing.T) {
 // The sdp string field follows the format specified here: https://tools.ietf.org/html/rfc4566#section-5
 //
 // webrtc.SessionDescription - pb.SessionDescription
-func TestRTCSessionDescriptionTypeMatch(t *testing.T) {
-
+func TestRTCSessionDescriptionTypeConversion(t *testing.T) {
 	var (
 		s1  pb.SessionDescription
 		s2  webrtc.SessionDescription
@@ -85,8 +83,7 @@ a=rtpmap:32 MPV/90000`,
 	}
 }
 
-func TestRTCIceCandidateTypeMatch(t *testing.T) {
-
+func TestRTCIceCandidateTypeConversion(t *testing.T) {
 	var (
 		s1  pb.RTCIceCandidateInit
 		s2  webrtc.ICECandidateInit
@@ -117,15 +114,10 @@ func TestRTCIceCandidateTypeMatch(t *testing.T) {
 	}
 }
 
-func TestProtoTypeMismatch(t *testing.T) {
-
+func TestUnsupportedProtobufType(t *testing.T) {
 	var (
 		type1 *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
 		type2 pb.WebSocketMessage
-		type3 pb.RTCIceServer = pb.RTCIceServer{
-			Urls: []string{"stun:stun.l.google.com:19302"},
-		}
-		type4 webrtc.ICECandidateInit
 		err error
 	)
 
@@ -138,13 +130,23 @@ func TestProtoTypeMismatch(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected ConvertTo() test to fail")
 	}
+}
+
+func TestTypeMismatch(t *testing.T) {
+	var (
+		type1 pb.RTCIceServer = pb.RTCIceServer{
+			Urls: []string{"stun:stun.l.google.com:19302"},
+		}
+		type2 webrtc.ICECandidateInit
+		err error
+	)
 
 	// Test supported protobuf message with type mismatch
-	err = ConvertFromProtoMessage(type3.ProtoReflect(), &type4)
+	err = ConvertFromProtoMessage(type1.ProtoReflect(), &type2)
 	if err == nil {
 		t.Errorf("Expected ConvertFrom() test to fail")
 	}
-	err = ConvertToProtoMessage(&type4, type3.ProtoReflect())
+	err = ConvertToProtoMessage(&type2, type1.ProtoReflect())
 	if err == nil {
 		t.Errorf("Expected ConvertTo() test to fail")
 	}
