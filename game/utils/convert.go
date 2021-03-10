@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	pj "google.golang.org/protobuf/encoding/protojson"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	pref "google.golang.org/protobuf/reflect/protoreflect"
 
 	webrtc "github.com/pion/webrtc/v3"
@@ -16,10 +16,10 @@ import (
 
 var (
 	// protobuf marshaling options
-	mo = pj.MarshalOptions{
+	mo = protojson.MarshalOptions{
 		UseEnumNumbers: false,
 	}
-	umo = pj.UnmarshalOptions{}
+	umo = protojson.UnmarshalOptions{}
 
 	// mapping of protobuf types to pion/webrtc types
 	mapping = map[pref.MessageType]reflect.Type{
@@ -65,13 +65,13 @@ func ConvertToProtoMessage(orig interface{}, m pref.Message) error {
 		return errors.New(fmt.Sprintf("Type mismatch - Expected: %s - Actual: %T", expectedType, orig))
 	}
 
-	// protobuf message in wire form
+	// pion/webrtc struct in json format
 	b, err := json.Marshal(orig)
 	if err != nil {
 		return err
 	}
 
-	err = pj.Unmarshal(b, m.Interface())
+	err = protojson.Unmarshal(b, m.Interface())
 	if err != nil {
 		return err
 	}
