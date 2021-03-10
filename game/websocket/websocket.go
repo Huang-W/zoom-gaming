@@ -17,8 +17,8 @@ import (
 
 /**
 
-	This file can be used to send/receive files across/from a websocket connection.
-	The supported message format is protobuf.
+	This file can be used to send/receive messages across/from a websocket connection.
+	The supported binary format is protobuf.
 
 	Current implementation does not confirm whether a message has been received by the client.
 
@@ -72,7 +72,7 @@ func (ws *WebSocket) Stop() {
 	ws.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-// readPump forwards any messages received from the websocket connection to any registered receivers.
+// readPump forwards messages received from the websocket connection to any registered receivers.
 //
 // There is at most one reader per websocket connection
 func (ws *WebSocket) readPump() {
@@ -124,7 +124,7 @@ func (ws *WebSocket) readPump() {
 
 // writePump pushes queued messages across the websocket connection.
 //
-// There is at most one writer for this connection
+// This go-routine ensures there is at most one writer for the websocket connection
 //
 // A ticker is used for the websocket heartbeat
 func (ws *WebSocket) writePump() {
@@ -132,7 +132,9 @@ func (ws *WebSocket) writePump() {
 	defer func() {
 		ticker.Stop()
 		ws.conn.Close()
+		// set outbound channel to nil to prevent future sends
 		close(ws.outbound)
+		ws.outbound = nil
 		log.Println("closing ws conn")
 	}()
 	for {
@@ -161,11 +163,13 @@ func (ws *WebSocket) writePump() {
 
 			pbMessage, err := proto.Marshal(message)
 			if err != nil {
-				return
+				utils.WarnOnError(err, fmt.Sprintf("Error marshaling message: %v", message))
+				continue
 			}
 			w.Write(pbMessage)
 
 			if err := w.Close(); err != nil {
+				// any errors with the writer are permanent
 				return
 			}
 		}
