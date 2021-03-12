@@ -23,8 +23,8 @@ var (
 
 	// mapping of protobuf types to pion/webrtc types
 	mapping = map[pref.MessageType]reflect.Type{
-		(*pb.RTCIceServer)(nil).ProtoReflect().Type(): reflect.TypeOf(&webrtc.ICEServer{}),
-		(*pb.SessionDescription)(nil).ProtoReflect().Type(): reflect.TypeOf(&webrtc.SessionDescription{}),
+		(*pb.RTCIceServer)(nil).ProtoReflect().Type():        reflect.TypeOf(&webrtc.ICEServer{}),
+		(*pb.SessionDescription)(nil).ProtoReflect().Type():  reflect.TypeOf(&webrtc.SessionDescription{}),
 		(*pb.RTCIceCandidateInit)(nil).ProtoReflect().Type(): reflect.TypeOf(&webrtc.ICECandidateInit{}),
 	}
 )

@@ -15,9 +15,9 @@ import (
 // webrtc.ICEServer - pb.RTCIceServer
 func TestRTCIceServerTypeConversion(t *testing.T) {
 	var (
-		s1  pb.RTCIceServer
-		s2  webrtc.ICEServer
-		s3  pb.RTCIceServer
+		s1 pb.RTCIceServer
+		s2 webrtc.ICEServer
+		s3 pb.RTCIceServer
 	)
 
 	s1 = pb.RTCIceServer{
@@ -45,9 +45,9 @@ func TestRTCIceServerTypeConversion(t *testing.T) {
 // webrtc.SessionDescription - pb.SessionDescription
 func TestRTCSessionDescriptionTypeConversion(t *testing.T) {
 	var (
-		s1  pb.SessionDescription
-		s2  webrtc.SessionDescription
-		s3  pb.SessionDescription
+		s1 pb.SessionDescription
+		s2 webrtc.SessionDescription
+		s3 pb.SessionDescription
 	)
 
 	s1 = pb.SessionDescription{
@@ -83,9 +83,9 @@ a=rtpmap:32 MPV/90000`,
 
 func TestRTCIceCandidateTypeConversion(t *testing.T) {
 	var (
-		s1  pb.RTCIceCandidateInit
-		s2  webrtc.ICECandidateInit
-		s3  pb.RTCIceCandidateInit
+		s1 pb.RTCIceCandidateInit
+		s2 webrtc.ICECandidateInit
+		s3 pb.RTCIceCandidateInit
 	)
 
 	s1 = pb.RTCIceCandidateInit{

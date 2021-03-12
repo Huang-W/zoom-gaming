@@ -1,8 +1,8 @@
 package utils
 
 import (
-  "fmt"
-  "log"
+	"fmt"
+	"log"
 )
 
 // Helper Functions

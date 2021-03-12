@@ -11,7 +11,6 @@ import (
 	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
-
 )
 
 var upgrader = websocket.Upgrader{}
@@ -20,7 +19,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		c        *websocket.Conn
-		ws       *WebSocket
+		ws       WebSocket
 		receiver <-chan proto.Message
 	)
 
@@ -30,8 +29,8 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ws = NewWebSocket(c)
-	defer ws.Stop()
-	receiver, err = ws.CreateReceiver()
+	defer ws.Close()
+	receiver = ws.Updates()
 	if err != nil {
 		return
 	}
@@ -47,7 +46,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func initialize() (s *httptest.Server, ws *websocket.Conn, err error){
+func initialize() (s *httptest.Server, ws *websocket.Conn, err error) {
 	// Create test server with the echo handler.
 	s = httptest.NewServer(http.HandlerFunc(echo))
 
@@ -74,19 +73,19 @@ func TestEcho(t *testing.T) {
 	// Send message to server, read response and check to see if it's what we expect.
 	for i := 0; i < 5; i++ {
 
-    wsMsg := pb.WebSocketMessage{
+		wsMsg := pb.WebSocketMessage{
 			Event: &pb.WebSocketMessage_RtcIceServer{
 				RtcIceServer: &pb.RTCIceServer{
-		  		Urls: []string{"stun:stun.l.google.com:19302"},
-		  	},
+					Urls: []string{"stun:stun.l.google.com:19302"},
+				},
 			},
 		}
 
-    var request []byte
-    request, err := proto.Marshal(&wsMsg)
-    if err != nil {
-      return
-    }
+		var request []byte
+		request, err := proto.Marshal(&wsMsg)
+		if err != nil {
+			return
+		}
 
 		if err := ws.WriteMessage(websocket.BinaryMessage, request); err != nil {
 			t.Fatalf("%v", err)
@@ -98,15 +97,15 @@ func TestEcho(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-    echo := &pb.WebSocketMessage{}
+		echo := &pb.WebSocketMessage{}
 		err = proto.Unmarshal(b, echo)
-    if err != nil {
+		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
-    // check equality
-  	if !proto.Equal(wsMsg.ProtoReflect().Interface(), echo) {
-  		t.Errorf("Want equality between s1 and s2")
-  	}
+		// check equality
+		if !proto.Equal(wsMsg.ProtoReflect().Interface(), echo) {
+			t.Fatalf("Want equality between s1 and s2")
+		}
 	}
 }
