@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "zoomgaming/proto";
+
+package signaling;
+
+// A websocket message that represents a certain event
+//
+// Each event has its own handler
+message SignalingEvent {
+  oneof event {
+    RTCIceServer rtc_ice_server = 1;
+    SessionDescription session_description = 2;
+    RTCIceCandidateInit rtc_ice_candidate_init = 3;
+  }
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/RTCIceServer
+//
+// for shared STUN server between Client and Server
+// could add additional fields for TURN server
+message RTCIceServer {
+  repeated string urls = 1 [ json_name = "urls" ] ;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/RTCSessionDescription
+message SessionDescription {
+  // https://pkg.go.dev/github.com/pion/webrtc/v3#SDPType
+  enum SDPType {
+    option allow_alias = true;
+    SDP_TYPE_UNSPECIFIED = 0 ;
+    offer = 1;
+    SDP_TYPE_OFFER = 1 ;
+    pranswer = 2;
+    SDP_TYPE_PRANSWER = 2 ;
+    answer = 3;
+    SDP_TYPE_ANSWER = 3 ;
+    rollback = 4;
+    SDP_TYPE_ROLLBACK = 4 ;
+  }
+  SDPType type = 1 [ json_name = "type" ] ;
+  // Follows the format specified here: https://tools.ietf.org/html/rfc4566#section-5
+  string sdp = 2 [ json_name = "sdp" ] ;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidateInit
+message RTCIceCandidateInit {
+  // https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidateInit/candidate
+  string candidate = 1;
+  string sdp_mid = 2;
+  uint32 sdp_m_line_index = 3;
+  string username_fragment = 4;
+}
