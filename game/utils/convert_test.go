@@ -113,8 +113,8 @@ func TestRTCIceCandidateTypeConversion(t *testing.T) {
 
 func TestUnsupportedProtobufType(t *testing.T) {
 	var (
-		s1 *pb.WebSocketMessage = (*pb.WebSocketMessage)(nil)
-		s2 *pb.WebSocketMessage
+		s1 *pb.SignalingEvent = (*pb.SignalingEvent)(nil)
+		s2 *pb.SignalingEvent
 	)
 
 	// Test unsupported protobuf message types

@@ -7,7 +7,7 @@ package signaling;
 // A websocket message that represents a certain event
 //
 // Each event has its own handler
-message WebSocketMessage {
+message SignalingEvent {
   oneof event {
     RTCIceServer rtc_ice_server = 1;
     SessionDescription session_description = 2;

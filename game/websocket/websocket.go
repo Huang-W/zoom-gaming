@@ -25,13 +25,13 @@ Current implementation does not confirm whether a message has been received by t
 type WebSocket interface {
 	Send(m proto.Message) error    // send a message to the browser
 	Updates() <-chan proto.Message // a stream of messages from the browser
-	Close() error                  // shutdown gracefully
+	Close() error                  // try to send a websocket close message
 }
 
 type webSocket struct {
 	conn *websocket.Conn
 
-	mu *sync.Mutex // protect the websocket writer
+	mu       *sync.Mutex // protect the websocket writer
 	receiver chan proto.Message
 }
 
@@ -39,9 +39,17 @@ type webSocket struct {
 func NewWebSocket(conn *websocket.Conn) WebSocket {
 	ws := &webSocket{
 		conn:     conn,
-		mu: &sync.Mutex{},
+		mu:       &sync.Mutex{},
 		receiver: make(chan proto.Message, 32),
 	}
+
+	ws.conn.SetReadLimit(4096)
+	ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	ws.conn.SetPongHandler(func(string) error {
+		ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
 	go ws.readPump()
 	go ws.heartbeat()
 	return ws
@@ -67,17 +75,17 @@ func (ws *webSocket) Send(m proto.Message) error {
 		log.Printf("Error marshaling message: %s", err)
 		return err
 	}
+
 	w.Write(pbMessage)
 
-	err = w.Close()
-	if err != nil {
+	if err = w.Close(); err != nil {
 		log.Printf("Error closing message: %s", err)
 		return err
 	}
 	return nil
 }
 
-// Create a receive-only channel that cannot be closed by the requester
+// Receive-only channel that cannot be closed by the requester
 func (ws *webSocket) Updates() <-chan proto.Message {
 	return ws.receiver
 }
@@ -96,15 +104,9 @@ func (ws *webSocket) Close() error {
 func (ws *webSocket) readPump() {
 	defer func() {
 		ws.conn.Close()
+		close(ws.receiver)
 		log.Println("closing ws conn")
 	}()
-
-	ws.conn.SetReadLimit(4096)
-	ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	ws.conn.SetPongHandler(func(string) error {
-		ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		return nil
-	})
 
 	for {
 		_, b, err := ws.conn.ReadMessage() // blocks until message read or error
@@ -116,7 +118,7 @@ func (ws *webSocket) readPump() {
 			break
 		}
 
-		msg := &pb.WebSocketMessage{}
+		msg := &pb.SignalingEvent{}
 		err = proto.Unmarshal(b, msg)
 		if err != nil {
 			log.Printf("Error unmarshaling byte array %v\nError: %s", b, err)
@@ -128,8 +130,6 @@ func (ws *webSocket) readPump() {
 }
 
 // Keeps the websocket connection alive
-//
-// A ticker is used for the websocket heartbeat
 func (ws *webSocket) heartbeat() {
 
 	ticker := time.NewTicker(50 * time.Second)
@@ -143,7 +143,7 @@ func (ws *webSocket) heartbeat() {
 	for {
 		select {
 		case <-ticker.C:
-			ws.conn.SetWriteDeadline(time.Now().Add(10 * time.Second)) // keeps the websocket connection alive
+			ws.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := ws.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

@@ -73,8 +73,8 @@ func TestEcho(t *testing.T) {
 	// Send message to server, read response and check to see if it's what we expect.
 	for i := 0; i < 5; i++ {
 
-		wsMsg := pb.WebSocketMessage{
-			Event: &pb.WebSocketMessage_RtcIceServer{
+		wsMsg := pb.SignalingEvent{
+			Event: &pb.SignalingEvent_RtcIceServer{
 				RtcIceServer: &pb.RTCIceServer{
 					Urls: []string{"stun:stun.l.google.com:19302"},
 				},
@@ -97,7 +97,7 @@ func TestEcho(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		echo := &pb.WebSocketMessage{}
+		echo := &pb.SignalingEvent{}
 		err = proto.Unmarshal(b, echo)
 		if err != nil {
 			t.Fatalf("%v", err)
