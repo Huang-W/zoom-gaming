@@ -9,6 +9,8 @@ import (
 	"github.com/unrolled/render"
 	"github.com/urfave/negroni"
 
+	proto "google.golang.org/protobuf/proto"
+
 	pb "zoomgaming/proto"
 	zoomws "zoomgaming/websocket"
 )
@@ -65,6 +67,23 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 		}
 
 		webSocket = zoomws.NewWebSocket(wsConn)
+
+		// test - log all received messages to console
+		go func(ws zoomws.WebSocket) {
+			var receiver <-chan proto.Message
+			receiver = ws.Updates()
+			for {
+				select {
+					case msg, ok := <-receiver:
+						if !ok {
+							return
+						}
+						log.Println("received", msg)
+						// echo back to browser
+						_ = ws.Send(msg)
+				}
+			}
+		}(webSocket)
 
 		// test1
 		wsMsg := pb.SignalingEvent{
