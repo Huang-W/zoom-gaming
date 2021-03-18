@@ -46,9 +46,9 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func initialize() (s *httptest.Server, ws *websocket.Conn, err error) {
+func initialize(f http.HandlerFunc) (s *httptest.Server, ws *websocket.Conn, err error) {
 	// Create test server with the echo handler.
-	s = httptest.NewServer(http.HandlerFunc(echo))
+	s = httptest.NewServer(f)
 
 	// Convert http://127.0.0.1 to ws://127.0.0.
 	u := "ws" + strings.TrimPrefix(s.URL, "http")
@@ -61,7 +61,7 @@ func initialize() (s *httptest.Server, ws *websocket.Conn, err error) {
 
 func TestEcho(t *testing.T) {
 
-	s, ws, err := initialize()
+	s, ws, err := initialize(echo)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
