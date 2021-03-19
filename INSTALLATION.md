@@ -23,7 +23,7 @@ protoc \
     proto/signaling.proto
 ```
 
-Protobuf compile to **Javascript** with closure imports ([Reference](https://developers.google.com/protocol-buffers/docs/reference/javascript-generated#closure))
+Protobuf compile to **Javascript** with commonjs imports ([Reference](https://developers.google.com/protocol-buffers/docs/reference/javascript-generated#commonjs-imports))
 ```shell
 protoc \
     --js_out=import_style=commonjs,binary:web/js/ \

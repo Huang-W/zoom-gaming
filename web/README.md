@@ -3,13 +3,11 @@
 #### Instructions
 
 - [Install latest version of npm](https://docs.npmjs.com/cli/v7/commands/npm-install)
-- `npm i -g google-closure-compiler`
 - `npm i -g protoc`
 - `npm install`
 
 #### Requirements
 
-- [Google closure compiler](https://github.com/google/closure-compiler)
 - [Protobuf compiler](https://developers.google.com/protocol-buffers/docs/reference/javascript-generated)
 - [Webpack and webpack-cli](https://webpack.js.org/guides/getting-started/)
 
