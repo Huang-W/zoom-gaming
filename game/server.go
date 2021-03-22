@@ -56,7 +56,7 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		var (
-			wsConn  *websocket.Conn
+			wsConn    *websocket.Conn
 			webSocket zoomws.WebSocket
 		)
 
@@ -74,13 +74,13 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 			receiver = ws.Updates()
 			for {
 				select {
-					case msg, ok := <-receiver:
-						if !ok {
-							return
-						}
-						log.Println("received", msg)
-						// echo back to browser
-						_ = ws.Send(msg)
+				case msg, ok := <-receiver:
+					if !ok {
+						return
+					}
+					log.Println("received", msg)
+					// echo back to browser
+					_ = ws.Send(msg)
 				}
 			}
 		}(webSocket)

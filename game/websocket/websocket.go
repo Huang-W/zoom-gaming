@@ -122,7 +122,7 @@ func (ws *webSocket) readPump() {
 		err = proto.Unmarshal(b, msg)
 		if err != nil {
 			log.Printf("Error unmarshaling byte array %v\nError: %s", b, err)
-			break
+			continue
 		}
 
 		ws.receiver <- msg

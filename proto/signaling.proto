@@ -2,8 +2,6 @@ syntax = "proto3";
 
 option go_package = "zoomgaming/proto";
 
-package signaling;
-
 // A websocket message that represents a certain event
 //
 // Each event has its own handler
