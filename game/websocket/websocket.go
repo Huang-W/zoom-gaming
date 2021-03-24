@@ -23,7 +23,7 @@ Current implementation does not confirm whether a message has been received by t
 */
 
 type WebSocket interface {
-	Send(m proto.Message) error    // send a message to the browser
+	Send(proto.Message) error      // send a message to the browser
 	Updates() <-chan proto.Message // a stream of messages from the browser
 	Close() error                  // try to send a websocket close message
 }

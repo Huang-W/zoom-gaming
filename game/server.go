@@ -12,7 +12,8 @@ import (
 	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
-	zoomws "zoomgaming/websocket"
+	zwebrtc "zoomgaming/webrtc"
+	zws "zoomgaming/websocket"
 )
 
 // Upgrade an HTTP connection to WebSocket
@@ -43,6 +44,7 @@ func NewServer() *negroni.Negroni {
 func initRoutes(mx *mux.Router, formatter *render.Render) {
 	mx.HandleFunc("/ping", pingHandler(formatter)).Methods("GET")
 	mx.HandleFunc("/ws", websocketHandler(formatter)).Methods("GET")
+	mx.HandleFunc("/webrtc", webrtcHandler(formatter)).Methods("GET")
 }
 
 func pingHandler(formatter *render.Render) http.HandlerFunc {
@@ -51,13 +53,13 @@ func pingHandler(formatter *render.Render) http.HandlerFunc {
 	}
 }
 
-// WebSocket init
+// WebSocket Echo server
 func websocketHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		var (
 			wsConn    *websocket.Conn
-			webSocket zoomws.WebSocket
+			webSocket zws.WebSocket
 		)
 
 		wsConn, err := upgrader.Upgrade(w, req, nil)
@@ -66,12 +68,12 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 			return
 		}
 
-		webSocket = zoomws.NewWebSocket(wsConn)
+		webSocket = zws.NewWebSocket(wsConn)
 
 		// test - log all received messages to console
-		go func(ws zoomws.WebSocket) {
+		go func() {
 			var receiver <-chan proto.Message
-			receiver = ws.Updates()
+			receiver = webSocket.Updates()
 			for {
 				select {
 				case msg, ok := <-receiver:
@@ -80,10 +82,10 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 					}
 					log.Println("received", msg)
 					// echo back to browser
-					_ = ws.Send(msg)
+					webSocket.Send(msg)
 				}
 			}
-		}(webSocket)
+		}()
 
 		// test1
 		wsMsg := pb.SignalingEvent{
@@ -94,5 +96,49 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 			},
 		}
 		webSocket.Send(wsMsg.ProtoReflect().Interface())
+	}
+}
+
+// WebRTC server
+// Sends an offer to the browser client
+//
+// Echoes back any messages reveived on the data chnnale with label of "GameInput"
+func webrtcHandler(formatter *render.Render) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		var (
+			wsConn    *websocket.Conn
+			rtcConn   zwebrtc.WebRTC
+			webSocket zws.WebSocket
+		)
+
+		wsConn, err := upgrader.Upgrade(w, req, nil)
+		if err != nil {
+			log.Printf("upgrading http request: %s", err)
+			return
+		}
+
+		webSocket = zws.NewWebSocket(wsConn)
+
+		rtcConn, err = zwebrtc.NewWebRTC(webSocket)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		go func() {
+			ch := rtcConn.DataChannel(zwebrtc.Echo)
+			for {
+				select {
+				case msg, ok := <-ch:
+					log.Println(msg)
+					if !ok {
+						return
+					}
+					// echo back to browser
+					rtcConn.Send(zwebrtc.Echo, msg)
+				}
+			}
+		}()
 	}
 }

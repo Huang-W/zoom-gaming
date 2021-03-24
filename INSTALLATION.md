@@ -20,12 +20,12 @@ Protobuf compile to **Go** ([Reference](https://developers.google.com/protocol-b
 protoc \
     --go_out=game/ \
     --go_opt=paths=source_relative \
-    proto/signaling.proto
+    proto/signaling.proto proto/echo.proto
 ```
 
 Protobuf compile to **Javascript** with commonjs imports ([Reference](https://developers.google.com/protocol-buffers/docs/reference/javascript-generated#commonjs-imports))
 ```shell
 protoc \
-    --js_out=import_style=commonjs,binary:web/js/ \
-    proto/signaling.proto
+    --js_out=import_style=commonjs,binary:web/src/ \
+    proto/signaling.proto proto/echo.proto
 ```

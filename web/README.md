@@ -1,9 +1,11 @@
 ### Web Server
 
+Webpack is required as protobuf does not currently support ES6-style imports.
+
 #### Instructions
 
 - [Install latest version of npm](https://docs.npmjs.com/cli/v7/commands/npm-install)
-- `npm i -g protoc`
+- `npm i -g protoc` If not already installed
 - `npm install`
 
 #### Requirements
