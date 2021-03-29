@@ -131,10 +131,10 @@ func webrtcHandler(formatter *render.Render) http.HandlerFunc {
 			for {
 				select {
 				case msg, ok := <-ch:
-					log.Println(msg)
 					if !ok {
 						return
 					}
+					log.Println(msg)
 					// echo back to browser
 					rtcConn.Send(zwebrtc.Echo, msg)
 				}

@@ -17,9 +17,6 @@ import (
 This file can be used to send/receive messages across/from a websocket connection.
 The supported binary format is protobuf.
 
-Current implementation does not confirm whether a message has been received by the client.
-// https://blog.golang.org/context
-
 */
 
 type WebSocket interface {
@@ -31,8 +28,8 @@ type WebSocket interface {
 type webSocket struct {
 	conn *websocket.Conn
 
-	mu       *sync.Mutex // protect the websocket writer
-	receiver chan proto.Message
+	mu       *sync.Mutex        // protect the websocket writer
+	receiver chan proto.Message // client messages arrive here
 }
 
 // Constructor
@@ -90,12 +87,9 @@ func (ws *webSocket) Updates() <-chan proto.Message {
 	return ws.receiver
 }
 
-func (ws *webSocket) Close() error {
-	err := ws.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		return err
-	}
-	return nil
+func (ws *webSocket) Close() (err error) {
+	err = ws.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	return
 }
 
 // readPump forwards messages received from the websocket connection
@@ -136,8 +130,6 @@ func (ws *webSocket) heartbeat() {
 
 	defer func() {
 		ticker.Stop()
-		ws.conn.Close()
-		log.Println("closing ws conn")
 	}()
 
 	for {

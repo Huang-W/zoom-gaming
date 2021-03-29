@@ -1,12 +1,11 @@
 ### Web Server
 
-Webpack is required as protobuf does not currently support ES6-style imports.
+Webpack is used to resolve CommonJS imports at compile-time.
 
 #### Instructions
 
 - [Install latest version of npm](https://docs.npmjs.com/cli/v7/commands/npm-install)
-- `npm i -g protoc` If not already installed
-- `npm install`
+- `npm install` dependencies in *package.json*
 
 #### Requirements
 

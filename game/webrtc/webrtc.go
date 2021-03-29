@@ -9,7 +9,6 @@ import (
 	_ "github.com/pion/rtp"
 	webrtc "github.com/pion/webrtc/v3"
 
-	protojson "google.golang.org/protobuf/encoding/protojson"
 	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
@@ -20,220 +19,108 @@ import (
 /**
 
 This file can be used to negotiate a WebRTC connection.
-The connection is established using a websocket connection to signal serialized protobuf messages of type pb.SignalingEvent
+A websocket connection is used to exchange signaling messages with the browser
 
 The local session description is offered only once.
-Any new remote session descriptions from the browser are automatically accepted and will replace any current remote sdp.
+The only track/channel the browser is allowed to add are the webcam audio + video tracks
 
 // Created data Channels and supported message types
+// Data channels are NOT negotiated - make sure to create them in browser.
 Echo: pb.Echo
 
 // Media Tracks
 None
 
-Current implementation does not confirm whether a SignalingEvent has been received by the client.
-It does contain some out-of-order handling (needs more testing)
+This code does not handle disconnects and probably a lot of other stuff.
 // https://blog.golang.org/context
 
 */
 
-const (
-	bufferedAmountLowThreshold uint64 = 512 * 1024  // 512 KB
-	maxBufferedAmount          uint64 = 1024 * 1024 // 1 MB
-)
-
 type WebRTC interface {
-	// data channel
-	DataChannel(DataChannelLabel) <-chan proto.Message
-	Send(DataChannelLabel, proto.Message) error
+	DataChannel(DataChannelLabel) <-chan proto.Message // a stream of data channel messages from the browser
+	Send(DataChannelLabel, proto.Message) error        // send a message to the client
 	// AttachVideoSender(<-chan *rtp.Packet) error
-	Close()
+	Close() error // close the connection
 }
 
+// The server in a client-server connection between two webrtc agents
 type webRTC struct {
 	conn *webrtc.PeerConnection
 
-	ws zws.WebSocket
-	// Incoming datachannel messages
-	receivers         map[DataChannelLabel](chan proto.Message)
-	dataChannels      map[DataChannelLabel](*webrtc.DataChannel)
-	mu                *sync.Mutex // protects candidates
+	ws                zws.WebSocket                              // WebSocket connection used for signaling
+	receivers         map[DataChannelLabel](chan proto.Message)  // data channel messages arrive here
+	dataChannels      map[DataChannelLabel](*webrtc.DataChannel) // internal handling of data channels
+	flowControls      map[DataChannelLabel](chan struct{})       // prevent overflowing of data channel send buffer
+	mu                *sync.Mutex                                // protects candidates
 	pendingCandidates []*webrtc.ICECandidate
-	send              chan struct{}
-}
-
-type DataChannelLabel int // Represents a unique data chhanel
-
-const (
-	Echo DataChannelLabel = iota + 1
-	// GameInput
-	// ChatRoom
-)
-
-func (label DataChannelLabel) String() string {
-	return [...]string{"", "Echo", "GameInput", "ChatRoom"}[label]
-}
-
-var DefaultConfig = webrtc.Configuration{
-	ICEServers: []webrtc.ICEServer{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
-	},
 }
 
 // Constructor
-func NewWebRTC(ws zws.WebSocket) (w WebRTC, err error) {
+func NewWebRTC(ws zws.WebSocket) (WebRTC WebRTC, err error) {
 
+	// Catch any panics and return (nil, err) after recovering from panic
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprintf("%s", r))
 		}
 	}()
 
-	webRTC := &webRTC{
+	w := &webRTC{
 		ws:                ws,
 		receivers:         make(map[DataChannelLabel](chan proto.Message)),
 		dataChannels:      make(map[DataChannelLabel](*webrtc.DataChannel)),
+		flowControls:      make(map[DataChannelLabel](chan struct{})),
 		mu:                &sync.Mutex{},
 		pendingCandidates: make([]*webrtc.ICECandidate, 0),
-		send:              make(chan struct{}),
 	}
 
-	var rtcConn *webrtc.PeerConnection
-	rtcConn, err = webrtc.NewPeerConnection(DefaultConfig)
+	var (
+		// pion/webrtc
+		conn      *webrtc.PeerConnection
+		iceServer webrtc.ICEServer
+		localSdp  webrtc.SessionDescription
+	)
+
+	conn, err = webrtc.NewPeerConnection(defaultConfig)
 	zutils.FailOnError(err, "Error setting local description: ")
 
-	// WebRTC ICE Signaling
-	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	// State of the WebRTC connection
-	rtcConn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		log.Printf("ICE Connection State has changed: %s", connectionState.String())
-		if connectionState == webrtc.ICEConnectionStateConnected {
-			log.Println("ConnectionStateConnected")
-		}
-		if connectionState == webrtc.ICEConnectionStateFailed || connectionState == webrtc.ICEConnectionStateClosed || connectionState == webrtc.ICEConnectionStateDisconnected {
-			if rtcConn != nil {
-				rtcConn.Close()
-			}
-		}
-	})
-	// Notify remote browser client of local server's new ICE candidate
-	//
-	// https://pkg.go.dev/github.com/pion/webrtc/v3#PeerConnection.OnICECandidate
-	rtcConn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
-		if iceCandidate != nil {
-			webRTC.mu.Lock()
-			defer webRTC.mu.Unlock()
+	w.conn = conn
+	w.initPeerConnectionHandlers() // register RTCPeerConnection handlers
+	w.initDataChannels()           // Create pre-negotiated data channels and register data channel handlers
 
-			// Check if remote client is reading for signaling
-			desc := rtcConn.RemoteDescription()
-			if desc == nil {
-				// If remote client is not ready, queue pending candidates
-				webRTC.pendingCandidates = append(webRTC.pendingCandidates, iceCandidate)
-			} else {
-				webRTC.signalCandidate(iceCandidate)
-			}
-		}
-	})
-	rtcConn.OnICEGatheringStateChange(func(s webrtc.ICEGathererState) {
-		log.Println("ICE Gatherer State: ", s.String())
-	})
-	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+	// The STUN server used in this server's configuration
+	iceServer = defaultConfig.ICEServers[0]
 
-	// WebRTC Data Channel
-	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	// Keyboard events from browser come from here.
-	//
-	// https://pkg.go.dev/github.com/pion/webrtc#RTCDataChannel
-	var dc *webrtc.DataChannel
-	dc, err = rtcConn.CreateDataChannel(Echo.String(), nil)
-	zutils.FailOnError(err, "Error setting local description: ")
-	webRTC.dataChannels[Echo] = dc
-	webRTC.receivers[Echo] = make(chan proto.Message, 1024)
-
-	dc.OnOpen(func() {
-		log.Printf("Data Channel '%s'-'%d' open.\n", dc.Label(), dc.ID())
-	})
-	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-		b := msg.Data
-		log.Printf("Message from DataChannel '%s': '%s'\n", dc.Label(), b)
-
-		// CHANGE THIS LATER
-		//
-		//
-		//
-		// MESSAGE SHOULD BE OF TYPE PB.INPUT_EVENT, NOT PB.SIGNALING_EVENT
-		var pb_msg pb.Echo
-		// use name of "ierr" because NewWebRTC return variable is named "err"
-		ierr := protojson.Unmarshal(b, pb_msg.ProtoReflect().Interface())
-		if ierr != nil {
-			return
-		}
-
-		// Send across receiving go channel
-		webRTC.receivers[Echo] <- pb_msg.ProtoReflect().Interface()
-	})
-	// Set bufferedAmountLowThreshold so that we can get notified when
-	// we can send more
-	dc.SetBufferedAmountLowThreshold(bufferedAmountLowThreshold)
-	// This callback is made when the current bufferedAmount becomes lower than the threadshold
-	dc.OnBufferedAmountLow(func() {
-		webRTC.send <- struct{}{}
-	})
-	dc.OnClose(func() {
-		log.Println("Data channel closed")
-		close(webRTC.receivers[Echo])
-		log.Println("Closed webrtc")
-	})
-	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-	// Send STUN server used in this server's config to the browser client
-	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	var iceServer webrtc.ICEServer
-	iceServer = DefaultConfig.ICEServers[0]
-
-	var iceServer_pb pb.RTCIceServer
-	err = zutils.ConvertToProtoMessage(&iceServer, iceServer_pb.ProtoReflect())
+	// wrap the ice server as a pb.SignalingEvent message
+	iceServer_msg, err := zutils.WrapRTCIceServer(&iceServer)
 	zutils.FailOnError(err, "Error converting ice server: ")
 
-	evt1 := pb.SignalingEvent{
-		Event: &pb.SignalingEvent_RtcIceServer{
-			RtcIceServer: &iceServer_pb,
-		},
-	}
-
-	err = ws.Send(evt1.ProtoReflect().Interface())
+	// Send the message to the client
+	err = ws.Send(iceServer_msg.ProtoReflect().Interface())
 	zutils.FailOnError(err, "Error sending iceServer to browser client: ")
-	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-	// Send this server's local sdp to the browser client
-	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	var localSdp webrtc.SessionDescription
-	localSdp, err = rtcConn.CreateOffer(nil)
-	zutils.FailOnError(err, "Error setting local description: ")
+	// Create an offer
+	localSdp, err = conn.CreateOffer(nil)
+	zutils.FailOnError(err, "Error creating offer: ")
 
-	var localSdp_pb pb.SessionDescription
-	err = zutils.ConvertToProtoMessage(&localSdp, localSdp_pb.ProtoReflect())
+	// wrap the session description as a pb.SignalingEvent message
+	localSdp_msg, err := zutils.WrapSessionDescription(&localSdp)
 	zutils.FailOnError(err, "Error converting local description: ")
 
-	evt2 := pb.SignalingEvent{
-		Event: &pb.SignalingEvent_SessionDescription{
-			SessionDescription: &localSdp_pb,
-		},
-	}
-
-	err = ws.Send(evt2.ProtoReflect().Interface())
+	// Send this server's session description to the browser client
+	err = ws.Send(localSdp_msg.ProtoReflect().Interface())
 	zutils.FailOnError(err, "Error sending sdp to browser client: ")
 
-	err = rtcConn.SetLocalDescription(localSdp)
+	err = conn.SetLocalDescription(localSdp)
 	zutils.FailOnError(err, "Error setting local description: ")
 	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-	webRTC.conn = rtcConn
-	go webRTC.signalingEvents()
+	// go routine to handle received websocket messages
+	//
+	// is also used to close the webrtc connection
+	go w.signalingEvents()
 
-	w = webRTC
+	WebRTC = w
 	return
 }
 
@@ -244,18 +131,22 @@ func (w *webRTC) DataChannel(label DataChannelLabel) <-chan proto.Message {
 
 // Send a message to the client
 func (w *webRTC) Send(label DataChannelLabel, msg proto.Message) error {
+
+	// marshal the message into a byte array
 	b, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
+	// check if the data channel has been created
 	dc, prs := w.dataChannels[label]
 	if !prs {
 		return errors.New("Label not found")
 	}
 
+	// block if the size of the stream's buffer exceeds 1 MB
 	if dc.BufferedAmount()+uint64(len(b)) > maxBufferedAmount {
-		<-w.send
+		<-w.flowControls[label]
 	}
 
 	err = dc.Send(b)
@@ -263,18 +154,18 @@ func (w *webRTC) Send(label DataChannelLabel, msg proto.Message) error {
 	return err
 }
 
-func (w *webRTC) Close() {
-	_ = w.conn.Close()
-	_ = w.ws.Close()
+func (w *webRTC) Close() (err error) {
+	err = w.ws.Close() // close the websocket connection
+	return
 }
 
-// Handle any received websocket messages
+// Handle any websocket messages received from the client
 //
-// Supported Events:
+// Expected Events:
 //	pb.SessionDescription
 //	pb.RtcIceCandidateInit
 //
-// Unhandled Events:
+// Ignored Events:
 //	pb.RtcIceServer
 func (w *webRTC) signalingEvents() {
 	clientUpdates := w.ws.Updates()
@@ -282,6 +173,24 @@ func (w *webRTC) signalingEvents() {
 		select {
 		case msg, ok := <-clientUpdates:
 			if !ok {
+				// Start the clean-up sequence
+
+				// close all data channels
+				for _, dc := range w.dataChannels {
+					dc.Close()
+				}
+
+				// close receiving go channels
+				for _, ch := range w.receivers {
+					close(ch)
+				}
+
+				// close buffering controls
+				for _, ch := range w.flowControls {
+					close(ch)
+				}
+
+				w.conn.Close()
 				return
 			}
 
@@ -349,19 +258,107 @@ func (w *webRTC) signalCandidate(c *webrtc.ICECandidate) {
 	iceCandInit := c.ToJSON()
 	log.Println("OnIceCandidate:", iceCandInit.Candidate)
 
-	var cand pb.RTCIceCandidateInit
-	err := zutils.ConvertToProtoMessage(&iceCandInit, cand.ProtoReflect())
-	if err != nil {
-		log.Println("Error converting proto message: ", err)
-		return
-	}
-
-	msg := pb.SignalingEvent{
-		Event: &pb.SignalingEvent_RtcIceCandidateInit{
-			RtcIceCandidateInit: &cand,
-		},
-	}
+	msg, err := zutils.WrapRTCIceCandidateInit(&iceCandInit)
+	zutils.FailOnError(err, "Error converting iceCandInit: ")
 
 	err = w.ws.Send(msg.ProtoReflect().Interface())
 	zutils.WarnOnError(err, "Error sending ice candidate: ")
+}
+
+func (w *webRTC) initPeerConnectionHandlers() {
+
+	w.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		log.Printf("ICE Connection State has changed: %s", connectionState.String())
+		if connectionState == webrtc.ICEConnectionStateConnected {
+			log.Println("ConnectionStateConnected")
+		}
+		if connectionState == webrtc.ICEConnectionStateFailed || connectionState == webrtc.ICEConnectionStateClosed || connectionState == webrtc.ICEConnectionStateDisconnected {
+			if w.conn != nil {
+				w.conn.Close()
+			}
+		}
+	})
+
+	// An ICE Candidate represents one end of the underlying RTCDtlsTransport
+	//
+	// A pair of ICE candidates, one from each agent, establishes a connection
+	//
+	// The local server is the controlling ICE agent
+	//
+	// https://pkg.go.dev/github.com/pion/webrtc/v3#PeerConnection.OnICECandidate
+	w.conn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
+
+		if iceCandidate != nil {
+
+			w.mu.Lock()
+			defer w.mu.Unlock()
+
+			desc := w.conn.RemoteDescription()
+			if desc == nil {
+
+				// If remote description has not been set, queue pending candidates
+				w.pendingCandidates = append(w.pendingCandidates, iceCandidate)
+
+			} else {
+
+				// Else, send the candidate to the client
+				w.signalCandidate(iceCandidate)
+
+			}
+		}
+	})
+	w.conn.OnICEGatheringStateChange(func(s webrtc.ICEGathererState) {
+		log.Println("ICE Gatherer State: ", s.String())
+	})
+}
+
+func (w *webRTC) initDataChannels() {
+
+	// WebRTC Data Channel - Echo
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	var dc *webrtc.DataChannel
+	dc, err := w.conn.CreateDataChannel(Echo.String(), &webrtc.DataChannelInit{
+		Ordered:    &echo_ordered,
+		Negotiated: &echo_negotiated,
+		ID:         &echo_id,
+	})
+	zutils.FailOnError(err, "Error setting local description: ")
+
+	w.dataChannels[Echo] = dc
+	w.receivers[Echo] = make(chan proto.Message, 1024)
+	w.flowControls[Echo] = make(chan struct{})
+
+	dc.OnOpen(func() {
+		log.Printf("Data Channel '%s'-'%d' open.\n", dc.Label(), dc.ID())
+	})
+
+	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+		b := msg.Data
+		log.Printf("Message from DataChannel '%s': '%s'\n", dc.Label(), b)
+
+		var pb_msg pb.Echo
+		err := proto.Unmarshal(b, pb_msg.ProtoReflect().Interface())
+		if err != nil {
+			return
+		}
+
+		// Send across receiving go channel
+		w.receivers[Echo] <- pb_msg.ProtoReflect().Interface()
+	})
+	// Set bufferedAmountLowThreshold so that we can get notified when
+	// we can send more
+	dc.SetBufferedAmountLowThreshold(bufferedAmountLowThreshold)
+	// This callback is made when the current bufferedAmount becomes lower than the threadshold
+	dc.OnBufferedAmountLow(func() {
+		w.flowControls[Echo] <- struct{}{}
+	})
+	dc.OnClose(func() {
+		log.Println("Data channel closed")
+	})
+	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+	// WebRTC Data Channel - GameInput
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	// Keyboard events from browser come from here.
+	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

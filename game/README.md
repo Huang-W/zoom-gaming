@@ -6,6 +6,12 @@
 - `go env -w GO111MODULE=on`
 - `go run main.go server.go`
 
+#### Description
+
+
+
+#### Testing Browser
+
 Test browser websocket code with the `ws://localhost:8080/ws` endpoint. Any messages with class pb.SignalingEvent will be echoed back to the sender.
 
 Test browser webrtc code with the `ws://localhost:8080/webrtc` endpoint. Any messages on the "Echo" data channel will be echoed back to the sender. No support for media streams yet.
