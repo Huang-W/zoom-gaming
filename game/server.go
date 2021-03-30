@@ -72,7 +72,7 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 
 		// test - log all received messages to console
 		go func() {
-			var receiver <-chan proto.Message
+			var receiver <-chan []byte
 			receiver = webSocket.Updates()
 			for {
 				select {
@@ -88,14 +88,15 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 		}()
 
 		// test1
-		wsMsg := pb.SignalingEvent{
+		wsMsg := &pb.SignalingEvent{
 			Event: &pb.SignalingEvent_RtcIceServer{
 				RtcIceServer: &pb.RTCIceServer{
 					Urls: []string{"stun:stun.l.google.com:19302"},
 				},
 			},
 		}
-		webSocket.Send(wsMsg.ProtoReflect().Interface())
+		b, _ := proto.Marshal(wsMsg)
+		webSocket.Send(b)
 	}
 }
 
@@ -127,7 +128,7 @@ func webrtcHandler(formatter *render.Render) http.HandlerFunc {
 		}
 
 		go func() {
-			ch := rtcConn.DataChannel(zwebrtc.Echo)
+			ch, _ := rtcConn.DataChannel(zwebrtc.Echo)
 			for {
 				select {
 				case msg, ok := <-ch:
