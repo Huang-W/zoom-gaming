@@ -6,10 +6,6 @@ import (
 	"time"
 
 	websocket "github.com/gorilla/websocket"
-
-	proto "google.golang.org/protobuf/proto"
-
-	pb "zoomgaming/proto"
 )
 
 /**
@@ -20,16 +16,16 @@ The supported binary format is protobuf.
 */
 
 type WebSocket interface {
-	Send(proto.Message) error      // send a message to the browser
-	Updates() <-chan proto.Message // a stream of messages from the browser
-	Close() error                  // try to send a websocket close message
+	Send([]byte) error      // send a message to the browser
+	Updates() <-chan []byte // a stream of messages from the browser
+	Close() error           // try to send a websocket close message
 }
 
 type webSocket struct {
 	conn *websocket.Conn
 
-	mu       *sync.Mutex        // protect the websocket writer
-	receiver chan proto.Message // client messages arrive here
+	mu       *sync.Mutex // protect the websocket writer
+	receiver chan []byte // client messages arrive here
 }
 
 // Constructor
@@ -37,7 +33,7 @@ func NewWebSocket(conn *websocket.Conn) WebSocket {
 	ws := &webSocket{
 		conn:     conn,
 		mu:       &sync.Mutex{},
-		receiver: make(chan proto.Message, 32),
+		receiver: make(chan []byte, 32),
 	}
 
 	ws.conn.SetReadLimit(4096)
@@ -55,7 +51,7 @@ func NewWebSocket(conn *websocket.Conn) WebSocket {
 // Send a message across the internal websocket channel
 //
 // Only one writer allowed at a time
-func (ws *webSocket) Send(m proto.Message) error {
+func (ws *webSocket) Send(msg []byte) error {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
@@ -67,23 +63,18 @@ func (ws *webSocket) Send(m proto.Message) error {
 		return err
 	}
 
-	pbMessage, err := proto.Marshal(m)
-	if err != nil {
-		log.Printf("Error marshaling message: %s", err)
-		return err
-	}
-
-	w.Write(pbMessage)
+	w.Write(msg)
 
 	if err = w.Close(); err != nil {
 		log.Printf("Error closing message: %s", err)
 		return err
 	}
+
 	return nil
 }
 
 // Receive-only channel that cannot be closed by the requester
-func (ws *webSocket) Updates() <-chan proto.Message {
+func (ws *webSocket) Updates() <-chan []byte {
 	return ws.receiver
 }
 
@@ -112,14 +103,7 @@ func (ws *webSocket) readPump() {
 			break
 		}
 
-		msg := &pb.SignalingEvent{}
-		err = proto.Unmarshal(b, msg)
-		if err != nil {
-			log.Printf("Error unmarshaling byte array %v\nError: %s", b, err)
-			continue
-		}
-
-		ws.receiver <- msg
+		ws.receiver <- b
 	}
 }
 

@@ -2,6 +2,10 @@ package webrtc
 
 import (
 	webrtc "github.com/pion/webrtc/v3"
+
+	pref "google.golang.org/protobuf/reflect/protoreflect"
+
+	pb "zoomgaming/proto"
 )
 
 const (
@@ -21,7 +25,7 @@ func (label DataChannelLabel) String() string {
 	return [...]string{"", "Echo", "GameInput", "ChatRoom"}[label]
 }
 
-var defaultConfig = webrtc.Configuration{
+var defaultRTCConfiguration = webrtc.Configuration{
 	ICEServers: []webrtc.ICEServer{
 		{
 			URLs: []string{"stun:stun.l.google.com:19302"},
@@ -29,7 +33,14 @@ var defaultConfig = webrtc.Configuration{
 	},
 }
 
-// DataChannelInit parameters - Echo
-var echo_ordered bool = true
-var echo_negotiated bool = true
-var echo_id uint16 = 1111
+var dcConfigs = map[DataChannelLabel](*webrtc.DataChannelInit){
+	Echo: &webrtc.DataChannelInit{
+		Ordered:    func(b bool) *bool { return &b }(true),
+		Negotiated: func(b bool) *bool { return &b }(true),
+		ID:         func(i uint16) *uint16 { return &i }(1111),
+	},
+}
+
+var dcMessageTypes = map[DataChannelLabel](pref.MessageType){
+	Echo: (*pb.Echo)(nil).ProtoReflect().Type(),
+}

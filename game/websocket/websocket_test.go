@@ -20,7 +20,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	var (
 		c        *websocket.Conn
 		ws       WebSocket
-		receiver <-chan proto.Message
+		receiver <-chan []byte
 	)
 
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -72,8 +72,7 @@ func TestEcho(t *testing.T) {
 
 	// Send message to server, read response and check to see if it's what we expect.
 	for i := 0; i < 5; i++ {
-
-		wsMsg := pb.SignalingEvent{
+		msg := pb.SignalingEvent{
 			Event: &pb.SignalingEvent_RtcIceServer{
 				RtcIceServer: &pb.RTCIceServer{
 					Urls: []string{"stun:stun.l.google.com:19302"},
@@ -82,7 +81,7 @@ func TestEcho(t *testing.T) {
 		}
 
 		var request []byte
-		request, err := proto.Marshal(&wsMsg)
+		request, err := proto.Marshal(&msg)
 		if err != nil {
 			return
 		}
@@ -104,7 +103,7 @@ func TestEcho(t *testing.T) {
 		}
 
 		// check equality
-		if !proto.Equal(wsMsg.ProtoReflect().Interface(), echo) {
+		if !proto.Equal(msg.ProtoReflect().Interface(), echo) {
 			t.Fatalf("Want equality between s1 and s2")
 		}
 	}

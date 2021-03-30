@@ -14,7 +14,6 @@ import (
 	websocket "github.com/gorilla/websocket"
 	webrtc "github.com/pion/webrtc/v3"
 
-	protojson "google.golang.org/protobuf/encoding/protojson"
 	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
@@ -48,7 +47,11 @@ func dataChannelEcho(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Client messages arrive on this channel
-	ch := rtc.DataChannel(Echo)
+	ch, err := rtc.DataChannel(Echo)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	// Echo messages back to the client
 	for {
@@ -77,10 +80,16 @@ func TestDataChannel(t *testing.T) {
 	WS := zws.NewWebSocket(ws)
 
 	// Rerepsents a browser client that is trying to connect to the server
-	testClient, err := NewTestClient(t, WS)
-	if err != nil {
-		t.Errorf("%s", err)
+	testClient := &testClient{
+		t:                 t,
+		ws:                WS,
+		dataChannels:      make(map[DataChannelLabel](DataChannel)),
+		Receiver:          make(chan (<-chan proto.Message)),
+		mu:                &sync.Mutex{},
+		pendingCandidates: make([]*webrtc.ICECandidate, 0),
 	}
+
+	go testClient.signalingEvents()
 
 	// (for testing) Start a go routine that sends an empty message to the server once every second
 	ticker := time.NewTicker(1 * time.Second)
@@ -106,19 +115,26 @@ func TestDataChannel(t *testing.T) {
 		}
 	}()
 
-	// The "Receive" go routine
-	//
-	// a separate go routine to log any echoed messages from the server
 	go func() {
-		receiving := testClient.DataChannel(Echo)
 		for {
 			select {
-			case msg, ok := <-receiving:
+			case ch, ok := <-testClient.Receiver:
 				if !ok {
 					return
 				}
-				b, _ := protojson.Marshal(msg)
-				t.Logf("Messaged received from server: %s", b)
+				// when a data channel has been created, start a go routine that logs receieved messages
+				go func() {
+					for {
+						select {
+						case msg, ok := <-ch:
+							if !ok {
+								return
+							}
+							b, _ := proto.Marshal(msg)
+							t.Logf("%s", b)
+						}
+					}
+				}()
 			}
 		}
 	}()
@@ -131,17 +147,18 @@ func TestDataChannel(t *testing.T) {
 /**
  * The client in a client-server connection between two webrtc agents
  *
- * The Webrtc connection is established by signaling messages across a websocket connection.
+ * A Webrtc connection is established by signaling messages across a websocket connection.
+ *
+ * The client agent implementation differs from the server agent implementation
  */
 type testClient struct {
 	conn *webrtc.PeerConnection
 	t    *testing.T
 
 	ws           zws.WebSocket
-	receivers    map[DataChannelLabel](chan proto.Message)  // data channel messages arrive here
-	dataChannels map[DataChannelLabel](*webrtc.DataChannel) // internal handling of data channels
-	flowControls map[DataChannelLabel](chan struct{})       // prevent overflowing of data channel send buffer
-	mu           *sync.Mutex                                // protects the pendingCandidates variable
+	dataChannels map[DataChannelLabel](DataChannel) // internal handling of data channels
+	Receiver     chan (<-chan proto.Message)        // wait for each data channel to be created
+	mu           *sync.Mutex                        // protects the pendingCandidates variable
 
 	// After the remote session description is set, the candidates in pendingCandidates will be signaled to the remote agent
 	pendingCandidates []*webrtc.ICECandidate
@@ -153,63 +170,16 @@ type testClient struct {
 	pendingSdp *webrtc.SessionDescription
 }
 
-func NewTestClient(t *testing.T, ws zws.WebSocket) (WebRTC WebRTC, err error) {
-
-	// Catch any panics and return (nil, err) when panicing
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New(fmt.Sprintf("%s", r))
-		}
-	}()
-
-	c := &testClient{
-		t:                 t,
-		ws:                ws,
-		receivers:         make(map[DataChannelLabel](chan proto.Message)),
-		dataChannels:      make(map[DataChannelLabel](*webrtc.DataChannel)),
-		flowControls:      make(map[DataChannelLabel](chan struct{})),
-		mu:                &sync.Mutex{},
-		pendingCandidates: make([]*webrtc.ICECandidate, 0),
-	}
-
-	// create receiver in advance
-	c.receivers[Echo] = make(chan proto.Message, 1024)
-	c.flowControls[Echo] = make(chan struct{})
-
-	go c.signalingEvents()
-
-	WebRTC = c
-	return
-}
-
-// Incoming messages for a datachannel
-func (client *testClient) DataChannel(label DataChannelLabel) <-chan proto.Message {
-	return client.receivers[label]
-}
-
 // Send a message across the datachannel
 func (client *testClient) Send(label DataChannelLabel, msg proto.Message) error {
-
-	// Marshal the protobuf message into a byte array
-	b, err := proto.Marshal(msg)
-	if err != nil {
-		return err
-	}
 
 	// Check if the data channel has been created
 	dc, prs := client.dataChannels[label]
 	if !prs {
-		return errors.New("Label not found")
+		return errors.New(fmt.Sprintf("Data channel with label of %s not found", label))
 	}
 
-	// Block if the buffer will exceed 1 MB
-	if dc.BufferedAmount()+uint64(len(b)) > maxBufferedAmount {
-		<-client.flowControls[label]
-	}
-
-	// Send the message using the SCTP transport
-	err = dc.Send(b)
-
+	err := dc.Send(msg)
 	return err
 }
 
@@ -227,111 +197,68 @@ func (client *testClient) signalingEvents() {
 	clientUpdates := client.ws.Updates()
 	for {
 		select {
-		case msg, ok := <-clientUpdates:
+		case b, ok := <-clientUpdates:
 			if !ok {
-				// When the websocket channel is closed, start clean-up
-				for _, ch := range client.receivers {
-					close(ch)
+				// close all data channels
+				for _, dc := range client.dataChannels {
+					dc.Close()
 				}
-				for _, ch := range client.flowControls {
-					close(ch)
-				}
+
+				client.conn.Close()
+				close(client.Receiver)
 				return
 			}
 
-			// Make sure the received message is pb.SignalingEvent
-			//
-			// Else, log to console
-			if msg_pb, ok := msg.(*pb.SignalingEvent); ok {
+			var msg pb.SignalingEvent
+			if err := proto.Unmarshal(b, msg.ProtoReflect().Interface()); err != nil {
+				client.t.Logf("Error unmarshaling message: %v", b)
+				continue
+			}
 
-				evt := msg_pb.GetEvent()
+			evt := msg.GetEvent()
 
-				switch t := evt.(type) {
+			switch evt.(type) {
 
-				// Event Type 1
-				// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-				case *pb.SignalingEvent_RtcIceServer:
+			// Event Type 1
+			// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			case *pb.SignalingEvent_RtcIceServer:
 
-					// 1. Convert from protobuf to pion/webrtc
-					iceServer_pb := msg.(*pb.SignalingEvent).GetRtcIceServer()
+				// 1. Convert from protobuf to pion/webrtc
+				iceServer_pb := msg.GetRtcIceServer()
 
-					// Convert from protobuf to pion/webrtc
-					var iceServer_pion webrtc.ICEServer
-					if err := zutils.ConvertFromProtoMessage(iceServer_pb.ProtoReflect(), &iceServer_pion); err != nil {
-						client.t.Errorf("%s", err)
-					}
+				// Convert from protobuf to pion/webrtc
+				var iceServer_pion webrtc.ICEServer
+				if err := zutils.ConvertFromProtoMessage(iceServer_pb.ProtoReflect(), &iceServer_pion); err != nil {
+					client.t.Errorf("%s", err)
+				}
 
-					// RTCConfiguration
-					var config = webrtc.Configuration{
-						ICEServers: []webrtc.ICEServer{iceServer_pion},
-					}
+				// RTCConfiguration
+				var config = webrtc.Configuration{
+					ICEServers: []webrtc.ICEServer{iceServer_pion},
+				}
 
-					// 2. Initialize the local webrtc agent
-					var err error
-					client.conn, err = webrtc.NewPeerConnection(config)
-					if err != nil {
-						client.t.Errorf("%s", err)
-					}
+				// 2. Initialize the local webrtc agent
+				var err error
+				client.conn, err = webrtc.NewPeerConnection(config)
+				if err != nil {
+					client.t.Errorf("%s", err)
+				}
 
-					// 3. Add event handlers
-					client.initClientHandlers()
+				// 3. Add event handlers
+				client.initClientHandlers()
 
-					// 4. Create a pre-negotiated datachannel with label of "Echo" and ID of "1111"
-					client.initEchoDataChannel()
+				// 4. Create a pre-negotiated datachannel with label of "Echo" and ID of "1111"
+				client.initEchoDataChannel()
 
-					// Protect the client.pendingCandidates variable
-					client.mu.Lock()
-					func() {
-						defer client.mu.Unlock()
-					}()
+				// Protect the client.pendingCandidates variable
+				client.mu.Lock()
+				func() {
+					defer client.mu.Unlock()
+				}()
 
-					// 5. Handle case where session description is received early
-					if client.pendingSdp != nil {
-						if err := client.conn.SetRemoteDescription(*client.pendingSdp); err != nil {
-							client.t.Errorf("%s", err)
-						}
-
-						answer, err := client.conn.CreateAnswer(nil)
-						if err != nil {
-							client.t.Errorf("%s", err)
-						}
-
-						if err := client.signalSessionDescription(&answer); err != nil {
-							client.t.Errorf("%s", err)
-						}
-
-						if err := client.conn.SetLocalDescription(answer); err != nil {
-							client.t.Errorf("%s", err)
-						}
-
-						for _, c := range client.pendingCandidates {
-							if err = client.signalCandidate(c); err != nil {
-								client.t.Logf("%s", err)
-							}
-						}
-					}
-
-				// Event Type 2
-				// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-				case *pb.SignalingEvent_SessionDescription:
-
-					// 1. Convert from protobuf to pion/webrtc
-					sdp_pb := msg.(*pb.SignalingEvent).GetSessionDescription()
-
-					// Convert from protobuf to pion/webrtc
-					var sdp_pion webrtc.SessionDescription
-					if err := zutils.ConvertFromProtoMessage(sdp_pb.ProtoReflect(), &sdp_pion); err != nil {
-						client.t.Errorf("%s", err)
-					}
-
-					// 2. If conn == nil, session description was received too early
-					if client.conn == nil {
-						client.pendingSdp = &sdp_pion
-						continue
-					}
-
-					// 3. Else, set remote sdp and send local sdp to server
-					if err := client.conn.SetRemoteDescription(sdp_pion); err != nil {
+				// 5. Handle case where session description is received early
+				if client.pendingSdp != nil {
+					if err := client.conn.SetRemoteDescription(*client.pendingSdp); err != nil {
 						client.t.Errorf("%s", err)
 					}
 
@@ -348,45 +275,85 @@ func (client *testClient) signalingEvents() {
 						client.t.Errorf("%s", err)
 					}
 
-					// Protect the client.pendingCandidates variable
-					client.mu.Lock()
-					func() {
-						defer client.mu.Unlock()
-					}()
-
-					// 4. Notify remote server of any pending candidates
 					for _, c := range client.pendingCandidates {
 						if err = client.signalCandidate(c); err != nil {
 							client.t.Logf("%s", err)
 						}
 					}
-
-				// Event Type 3
-				// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-				case *pb.SignalingEvent_RtcIceCandidateInit:
-
-					// 1. Convert from protobuf to pion/webrtc
-					rtcIceCand_pb := msg.(*pb.SignalingEvent).GetRtcIceCandidateInit()
-
-					// Convert from protobuf to pion/webrtc
-					var rtcIceCand_pion webrtc.ICECandidateInit
-					if err := zutils.ConvertFromProtoMessage(rtcIceCand_pb.ProtoReflect(), &rtcIceCand_pion); err != nil {
-						client.t.Errorf("%s", err)
-					}
-
-					// 2. Add a remote ICE candidate
-					if err := client.conn.AddICECandidate(rtcIceCand_pion); err != nil {
-						client.t.Logf("%s", err)
-					}
-
-				case nil:
-					client.t.Logf("Signaling event message with empty Event field")
-				default:
-					client.t.Logf("SignalingEvent.Event has unexpected type %T", t)
 				}
 
-			} else {
-				client.t.Logf("%s", msg)
+			// Event Type 2
+			// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			case *pb.SignalingEvent_SessionDescription:
+
+				// 1. Convert from protobuf to pion/webrtc
+				sdp_pb := msg.GetSessionDescription()
+
+				// Convert from protobuf to pion/webrtc
+				var sdp_pion webrtc.SessionDescription
+				if err := zutils.ConvertFromProtoMessage(sdp_pb.ProtoReflect(), &sdp_pion); err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				// 2. If conn == nil, session description was received too early
+				if client.conn == nil {
+					client.pendingSdp = &sdp_pion
+					continue
+				}
+
+				// 3. Else, set remote sdp and send local sdp to server
+				if err := client.conn.SetRemoteDescription(sdp_pion); err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				answer, err := client.conn.CreateAnswer(nil)
+				if err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				if err := client.signalSessionDescription(&answer); err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				if err := client.conn.SetLocalDescription(answer); err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				// Protect the client.pendingCandidates variable
+				client.mu.Lock()
+				func() {
+					defer client.mu.Unlock()
+				}()
+
+				// 4. Notify remote server of any pending candidates
+				for _, c := range client.pendingCandidates {
+					if err = client.signalCandidate(c); err != nil {
+						client.t.Logf("%s", err)
+					}
+				}
+
+			// Event Type 3
+			// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			case *pb.SignalingEvent_RtcIceCandidateInit:
+
+				// 1. Convert from protobuf to pion/webrtc
+				rtcIceCand_pb := msg.GetRtcIceCandidateInit()
+
+				// Convert from protobuf to pion/webrtc
+				var rtcIceCand_pion webrtc.ICECandidateInit
+				if err := zutils.ConvertFromProtoMessage(rtcIceCand_pb.ProtoReflect(), &rtcIceCand_pion); err != nil {
+					client.t.Errorf("%s", err)
+				}
+
+				// 2. Add a remote ICE candidate
+				if err := client.conn.AddICECandidate(rtcIceCand_pion); err != nil {
+					client.t.Logf("%s", err)
+				}
+
+			case nil:
+				client.t.Logf("Signaling event message with empty Event field")
+			default:
+				client.t.Logf("SignalingEvent.Event has unexpected type %T", evt)
 			}
 		}
 	}
@@ -411,21 +378,11 @@ func (client *testClient) initClientHandlers() {
 			client.pendingCandidates = append(client.pendingCandidates, c)
 
 		} else {
-			// Else, send the candidate to the remote agent
 
-			var iceCandInit webrtc.ICECandidateInit
-			iceCandInit = c.ToJSON()
-
-			// Wrap the ice candidate as a pb.SignalingEvent
-			msg, err := zutils.WrapRTCIceCandidateInit(&iceCandInit)
-			if err != nil {
-				client.t.Logf("Error converting proto message: %s", err)
-				return
+			if err := client.signalCandidate(c); err != nil {
+				client.t.Logf("%s", err)
 			}
 
-			if err := client.ws.Send(msg.ProtoReflect().Interface()); err != nil {
-				client.t.Logf("Error sending websocket message: %s", err)
-			}
 		}
 	})
 
@@ -440,43 +397,16 @@ func (client *testClient) initClientHandlers() {
 //
 // Register OnMessage handler
 func (client *testClient) initEchoDataChannel() {
-	var dc *webrtc.DataChannel
-	dc, err := client.conn.CreateDataChannel(Echo.String(), &webrtc.DataChannelInit{
-		Ordered:    &echo_ordered,    // in-sequence messages
-		Negotiated: &echo_negotiated, // Data channel is either pre-negotiated or we need to fire a "new channel" event
-		ID:         &echo_id,         // custom ID specified for pre-negotiated channels only
-	})
+	echo_impl, err := client.conn.CreateDataChannel(Echo.String(), dcConfigs[Echo])
 	if err != nil {
 		client.t.Errorf("%s", err)
 	}
 
-	client.dataChannels[Echo] = dc // this is used in the Send(DataChannelLabel, proto.Message) function
+	echo, err := NewDataChannel(Echo, echo_impl)
+	zutils.FailOnError(err, "Error creating data channel interface: ")
 
-	// Register text message handling
-	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-
-		b := msg.Data // the message as a byte array
-
-		client.t.Logf("Message from DataChannel '%s': '%s'\n", dc.Label(), b)
-
-		// Unmarshal from protobuf wireform
-		var pb_msg pb.Echo
-		err := proto.Unmarshal(b, pb_msg.ProtoReflect().Interface())
-		if err != nil {
-			return
-		}
-
-		// Notify any listeners of a new message
-		client.receivers[Echo] <- pb_msg.ProtoReflect().Interface()
-	})
-
-	// The bufferedAmountLowThreshold notifies us of when we can send more data
-	dc.SetBufferedAmountLowThreshold(bufferedAmountLowThreshold)
-
-	// This callback is made when the current bufferedAmount becomes lower than the threadshold
-	dc.OnBufferedAmountLow(func() {
-		client.flowControls[Echo] <- struct{}{}
-	})
+	client.dataChannels[Echo] = echo // this is used in the Send(DataChannelLabel, proto.Message) function
+	client.Receiver <- echo.Updates()
 }
 
 // Helper function to send an RtcIceCandidateInit to the server
@@ -484,17 +414,16 @@ func (client *testClient) initEchoDataChannel() {
 func (client *testClient) signalCandidate(c *webrtc.ICECandidate) error {
 
 	// Convert to dictionary form
-	var iceCandInit webrtc.ICECandidateInit
-	iceCandInit = c.ToJSON()
+	iceCandInit := c.ToJSON()
 
 	// Wrap the ice candidate as a pb.SignalingEvent
-	msg, err := zutils.WrapRTCIceCandidateInit(&iceCandInit)
+	b, err := zutils.MarshalSignalingEvent(&iceCandInit)
 	if err != nil {
 		return err
 	}
 
 	// Send the message over websocket
-	if err := client.ws.Send(msg.ProtoReflect().Interface()); err != nil {
+	if err := client.ws.Send(b); err != nil {
 		return err
 	}
 
@@ -506,13 +435,13 @@ func (client *testClient) signalCandidate(c *webrtc.ICECandidate) error {
 func (client *testClient) signalSessionDescription(sdp *webrtc.SessionDescription) error {
 
 	// Wrap the sdp as a pb.SignalingEvent
-	msg, err := zutils.WrapSessionDescription(sdp)
+	b, err := zutils.MarshalSignalingEvent(sdp)
 	if err != nil {
 		return err
 	}
 
 	// Send the message over websocket
-	if err := client.ws.Send(msg.ProtoReflect().Interface()); err != nil {
+	if err := client.ws.Send(b); err != nil {
 		return err
 	}
 
