@@ -30,14 +30,13 @@ Echo: pb.Echo
 // Media Tracks
 None
 
-This code does not handle disconnects and probably a lot of other stuff.
 // https://blog.golang.org/context
 
 */
 
 type WebRTC interface {
-	DataChannel(DataChannelLabel) (<-chan proto.Message, error) // a stream of data channel messages from the browser
-	Send(DataChannelLabel, proto.Message) error                 // send a message to the client
+	DataChannels() chan (<-chan proto.Message)
+	Send(proto.Message) error // send a message to the client
 	// AttachVideoSender(<-chan *rtp.Packet) error
 	Close() error // close the connection
 }
@@ -47,9 +46,10 @@ type webRTC struct {
 	conn *webrtc.PeerConnection
 
 	ws                zws.WebSocket                      // WebSocket connection used for signaling
-	dataChannels      map[DataChannelLabel](DataChannel) // data channels by label
+	updates           chan (<-chan proto.Message)        // notify the listener of any new data chhanels
+	dataChannels      map[DataChannelLabel](DataChannel) // use this mapping to send messages to the browser
 	mu                *sync.Mutex                        // protects candidates
-	pendingCandidates []*webrtc.ICECandidate
+	pendingCandidates []*webrtc.ICECandidate             // save candidates for after the browser answers
 }
 
 // Constructor
@@ -64,6 +64,7 @@ func NewWebRTC(ws zws.WebSocket) (WebRTC WebRTC, err error) {
 
 	w := &webRTC{
 		ws:                ws,
+		updates:           make(chan (<-chan proto.Message)),
 		dataChannels:      make(map[DataChannelLabel](DataChannel)),
 		mu:                &sync.Mutex{},
 		pendingCandidates: make([]*webrtc.ICECandidate, 0),
@@ -111,133 +112,33 @@ func NewWebRTC(ws zws.WebSocket) (WebRTC WebRTC, err error) {
 
 	// go routine to handle received websocket messages
 	//
-	// also handles teardown
-	go w.signalingEvents()
+	// also tears down RTCPeerConnection on death of websocket connection
+	go w.watchWebSocket()
 
 	WebRTC = w
 	return
 }
 
-// Incoming datachannel messages
-func (w *webRTC) DataChannel(label DataChannelLabel) (<-chan proto.Message, error) {
+// Incoming datachannel... channels, and messages from those channels
+func (w *webRTC) DataChannels() chan (<-chan proto.Message) {
+	return w.updates
+}
+
+// Send a message to the browser idiomatically based on message type
+func (w *webRTC) Send(msg proto.Message) error {
+	label, prs := reverseMapping[msg.ProtoReflect().Type()]
+	if !prs {
+		return errors.New("Invalid message type")
+	}
 	dc, prs := w.dataChannels[label]
 	if !prs {
-		return nil, errors.New(fmt.Sprintf("Channel with label %s not found", label))
+		return errors.New(fmt.Sprintf("Data Channel with label %s not found", label))
 	}
-	return dc.Updates(), nil
+	return dc.Send(msg)
 }
 
-// Send a message to the browser on a specific data channel
-func (w *webRTC) Send(label DataChannelLabel, msg proto.Message) error {
-	dc, prs := w.dataChannels[label]
-	if !prs {
-		return errors.New(fmt.Sprintf("Data channel with label of %s not found", label))
-	}
-
-	err := dc.Send(msg)
-	return err
-}
-
-func (w *webRTC) Close() (err error) {
-	err = w.ws.Close() // close the websocket connection
-	return
-}
-
-// Handle any websocket messages received from the client
-//
-// Expected Events:
-//	pb.SessionDescription
-//	pb.RtcIceCandidateInit
-//
-// Ignored Events:
-//	pb.RtcIceServer
-func (w *webRTC) signalingEvents() {
-	clientUpdates := w.ws.Updates()
-	for {
-		select {
-		case b, ok := <-clientUpdates:
-			if !ok {
-				// Start the teardown sequence
-
-				// close all data channels
-				for _, dc := range w.dataChannels {
-					dc.Close()
-				}
-
-				w.conn.Close()
-				return
-			}
-
-			var msg pb.SignalingEvent
-			if err := proto.Unmarshal(b, msg.ProtoReflect().Interface()); err != nil {
-				log.Printf("Error unmarshaling message: %v", b)
-				continue
-			}
-
-			evt := msg.GetEvent()
-
-			switch t := evt.(type) {
-
-			case *pb.SignalingEvent_RtcIceServer:
-				continue // not expected from client
-
-			case *pb.SignalingEvent_SessionDescription:
-				sdp_pb := msg.GetSessionDescription()
-
-				var sdp_pion webrtc.SessionDescription
-				err := zutils.ConvertFromProtoMessage(sdp_pb.ProtoReflect(), &sdp_pion)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				err = w.conn.SetRemoteDescription(sdp_pion)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				w.mu.Lock()
-				func() {
-					defer w.mu.Unlock()
-				}()
-
-				for _, c := range w.pendingCandidates {
-					w.signalCandidate(c)
-				}
-
-			case *pb.SignalingEvent_RtcIceCandidateInit:
-				rtcIceCand_pb := msg.GetRtcIceCandidateInit()
-
-				var rtcIceCand_pion webrtc.ICECandidateInit
-				err := zutils.ConvertFromProtoMessage(rtcIceCand_pb.ProtoReflect(), &rtcIceCand_pion)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				err = w.conn.AddICECandidate(rtcIceCand_pion)
-				zutils.WarnOnError(err, "Error adding ICE Candidate: ")
-
-			case nil:
-				log.Println("Signaling event message with empty Event field")
-			default:
-				log.Printf("SignalingEvent.Event has unexpected type %T", t)
-			}
-		}
-	}
-}
-
-// Helper function to marshal and send local ice candidates
-func (w *webRTC) signalCandidate(c *webrtc.ICECandidate) {
-	iceCandInit := c.ToJSON()
-	log.Println("OnIceCandidate:", iceCandInit.Candidate)
-
-	b, err := zutils.MarshalSignalingEvent(&iceCandInit)
-	zutils.FailOnError(err, "Error converting iceCandInit: ")
-
-	err = w.ws.Send(b)
-	zutils.WarnOnError(err, "Error sending ice candidate: ")
+func (w *webRTC) Close() error {
+	return w.ws.Close() // close the websocket connection
 }
 
 func (w *webRTC) initPeerConnectionHandlers() {
@@ -294,14 +195,155 @@ func (w *webRTC) initDataChannels() {
 	echo_impl, err := w.conn.CreateDataChannel(Echo.String(), dcConfigs[Echo])
 	zutils.FailOnError(err, "Error creating data channel: ")
 
-	echo, err := NewDataChannel(Echo, echo_impl)
-	zutils.FailOnError(err, "Error creating data channel interface: ")
+	echo := NewDataChannel(Echo, echo_impl)
 
 	w.dataChannels[Echo] = echo
+	go w.onDataChannelOpen(echo)
 	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	// WebRTC Data Channel - GameInput
 	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	// Keyboard events from browser come from here.
 	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+
+func (w *webRTC) onDataChannelOpen(dc DataChannel) {
+	updates := dc.Updates()
+	for {
+		select {
+		case ch, ok := <-updates:
+			if !ok {
+				return
+			}
+			w.updates <- ch
+		}
+	}
+}
+
+// Helper function to marshal and send local ice candidates
+func (w *webRTC) signalCandidate(c *webrtc.ICECandidate) {
+	iceCandInit := c.ToJSON()
+	log.Println("OnIceCandidate:", iceCandInit.Candidate)
+
+	b, err := zutils.MarshalSignalingEvent(&iceCandInit)
+	zutils.FailOnError(err, "Error converting iceCandInit: ")
+
+	err = w.ws.Send(b)
+	zutils.WarnOnError(err, "Error sending ice candidate: ")
+}
+
+// Handle any websocket messages received from the client
+//
+// Expected Events:
+//	pb.SessionDescription
+//	pb.RtcIceCandidateInit
+//
+// Ignored Events:
+//	pb.RtcIceServer
+func (w *webRTC) watchWebSocket() {
+
+	defer func() {
+		// Start the teardown sequence and close all data channels
+		for _, dc := range w.dataChannels {
+			dc.Close()
+		}
+		w.conn.Close()
+	}()
+
+	updates := w.ws.Updates()
+
+	for {
+		select {
+		case ch, ok := <-updates:
+
+			if !ok {
+				return
+			}
+
+			go w.handleSignalingEvents(ch)
+
+		}
+	}
+}
+
+func (w *webRTC) handleSignalingEvents(ch <-chan []byte) {
+	for {
+		select {
+		case b, ok := <-ch:
+			if !ok {
+				return
+			}
+
+			var msg pb.SignalingEvent
+			if err := proto.Unmarshal(b, msg.ProtoReflect().Interface()); err != nil {
+				log.Printf("Error unmarshaling message: %v", b)
+				continue
+			}
+
+			evt := msg.GetEvent()
+
+			switch t := evt.(type) {
+
+			case *pb.SignalingEvent_RtcIceServer:
+
+				continue // not expected from client
+
+			case *pb.SignalingEvent_SessionDescription:
+
+				if err := w.handleSessionDescription(&msg); err != nil {
+					zutils.WarnOnError(err, "Error handling session description message on WS: ")
+				}
+
+			case *pb.SignalingEvent_RtcIceCandidateInit:
+
+				if err := w.handleRtcIceCandidateInit(&msg); err != nil {
+					zutils.WarnOnError(err, "Error handling ice cand message on WS: ")
+				}
+
+			case nil:
+
+				log.Println("Signaling event message with empty Event field")
+
+			default:
+
+				log.Printf("SignalingEvent.Event has unexpected type %T", t)
+
+			}
+		}
+	}
+}
+
+func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
+	sdp_pb := msg.GetSessionDescription()
+
+	var sdp_pion webrtc.SessionDescription
+	if err := zutils.ConvertFromProtoMessage(sdp_pb.ProtoReflect(), &sdp_pion); err != nil {
+		return err
+	}
+
+	if err := w.conn.SetRemoteDescription(sdp_pion); err != nil {
+		return err
+	}
+
+	w.mu.Lock()
+	func() {
+		defer w.mu.Unlock()
+	}()
+
+	for _, c := range w.pendingCandidates {
+		w.signalCandidate(c)
+	}
+
+	return nil
+}
+
+func (w *webRTC) handleRtcIceCandidateInit(msg *pb.SignalingEvent) error {
+	rtcIceCand_pb := msg.GetRtcIceCandidateInit()
+
+	var rtcIceCand_pion webrtc.ICECandidateInit
+	if err := zutils.ConvertFromProtoMessage(rtcIceCand_pb.ProtoReflect(), &rtcIceCand_pion); err != nil {
+		return err
+	}
+
+	return w.conn.AddICECandidate(rtcIceCand_pion)
 }

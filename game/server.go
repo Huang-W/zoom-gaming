@@ -57,46 +57,51 @@ func pingHandler(formatter *render.Render) http.HandlerFunc {
 func websocketHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var (
-			wsConn    *websocket.Conn
-			webSocket zws.WebSocket
-		)
-
-		wsConn, err := upgrader.Upgrade(w, req, nil)
+		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			log.Printf("upgrading http request: %s", err)
 			return
 		}
 
-		webSocket = zws.NewWebSocket(wsConn)
+		ws := zws.NewWebSocket(conn)
 
 		// test - log all received messages to console
 		go func() {
-			var receiver <-chan []byte
-			receiver = webSocket.Updates()
+			updates := ws.Updates()
 			for {
 				select {
-				case msg, ok := <-receiver:
+				case ch, ok := <-updates:
 					if !ok {
 						return
 					}
-					log.Println("received", msg)
-					// echo back to browser
-					webSocket.Send(msg)
+					// start a go routine to echo messages once a channel is opened
+					go func() {
+						for {
+							select {
+							case msg, ok := <-ch:
+								if !ok {
+									return
+								}
+								log.Println("received", msg)
+								// echo back to browser
+								ws.Send(msg)
+							}
+						}
+					}()
 				}
 			}
 		}()
 
 		// test1
-		wsMsg := &pb.SignalingEvent{
+		msg := &pb.SignalingEvent{
 			Event: &pb.SignalingEvent_RtcIceServer{
 				RtcIceServer: &pb.RTCIceServer{
 					Urls: []string{"stun:stun.l.google.com:19302"},
 				},
 			},
 		}
-		b, _ := proto.Marshal(wsMsg)
-		webSocket.Send(b)
+		b, _ := proto.Marshal(msg)
+		ws.Send(b)
 	}
 }
 
@@ -107,37 +112,42 @@ func websocketHandler(formatter *render.Render) http.HandlerFunc {
 func webrtcHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var (
-			wsConn    *websocket.Conn
-			rtcConn   zwebrtc.WebRTC
-			webSocket zws.WebSocket
-		)
-
-		wsConn, err := upgrader.Upgrade(w, req, nil)
+		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			log.Printf("upgrading http request: %s", err)
 			return
 		}
 
-		webSocket = zws.NewWebSocket(wsConn)
+		ws := zws.NewWebSocket(conn)
 
-		rtcConn, err = zwebrtc.NewWebRTC(webSocket)
+		rtc, err := zwebrtc.NewWebRTC(ws)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
 		go func() {
-			ch, _ := rtcConn.DataChannel(zwebrtc.Echo)
+			updates := rtc.DataChannels()
 			for {
 				select {
-				case msg, ok := <-ch:
+				case ch, ok := <-updates:
 					if !ok {
 						return
 					}
-					log.Println(msg)
-					// echo back to browser
-					rtcConn.Send(zwebrtc.Echo, msg)
+					// start a go routine to echo messages once a channel is opened
+					go func() {
+						for {
+							select {
+							case msg, ok := <-ch:
+								if !ok {
+									return
+								}
+								log.Println(msg)
+								// echo back to browser
+								rtc.Send(msg)
+							}
+						}
+					}()
 				}
 			}
 		}()

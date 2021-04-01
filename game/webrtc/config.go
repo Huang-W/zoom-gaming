@@ -41,6 +41,10 @@ var dcConfigs = map[DataChannelLabel](*webrtc.DataChannelInit){
 	},
 }
 
-var dcMessageTypes = map[DataChannelLabel](pref.MessageType){
+var mapping = map[DataChannelLabel](pref.MessageType){
 	Echo: (*pb.Echo)(nil).ProtoReflect().Type(),
+}
+
+var reverseMapping = map[pref.MessageType](DataChannelLabel){
+	(*pb.Echo)(nil).ProtoReflect().Type(): Echo,
 }

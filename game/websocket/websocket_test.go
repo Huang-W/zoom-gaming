@@ -18,9 +18,8 @@ var upgrader = websocket.Upgrader{}
 func echo(w http.ResponseWriter, r *http.Request) {
 
 	var (
-		c        *websocket.Conn
-		ws       WebSocket
-		receiver <-chan []byte
+		c  *websocket.Conn
+		ws WebSocket
 	)
 
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -29,19 +28,26 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ws = NewWebSocket(c)
-	defer ws.Close()
-	receiver = ws.Updates()
-	if err != nil {
-		return
-	}
 
+	updates := ws.Updates()
 	for {
 		select {
-		case msg, ok := <-receiver:
+		case ch, ok := <-updates:
 			if !ok {
 				return
 			}
-			_ = ws.Send(msg)
+			// start a go routine to echo messages once a channel is opened
+			go func() {
+				for {
+					select {
+					case msg, ok := <-ch:
+						if !ok {
+							return
+						}
+						ws.Send(msg)
+					}
+				}
+			}()
 		}
 	}
 }

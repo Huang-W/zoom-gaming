@@ -16,16 +16,17 @@ The supported binary format is protobuf.
 */
 
 type WebSocket interface {
-	Send([]byte) error      // send a message to the browser
-	Updates() <-chan []byte // a stream of messages from the browser
-	Close() error           // try to send a websocket close message
+	Send([]byte) error             // send a message to the browser
+	Updates() chan (<-chan []byte) // notify the listener of an open websocket connection
+	Close() error                  // try to send a websocket close message
 }
 
 type webSocket struct {
 	conn *websocket.Conn
 
-	mu       *sync.Mutex // protect the websocket writer
-	receiver chan []byte // client messages arrive here
+	mu       *sync.Mutex          // protect the websocket writer
+	updates  chan (<-chan []byte) // notify the listener of a new channel
+	receiver chan []byte          // client messages arrive here
 }
 
 // Constructor
@@ -33,7 +34,8 @@ func NewWebSocket(conn *websocket.Conn) WebSocket {
 	ws := &webSocket{
 		conn:     conn,
 		mu:       &sync.Mutex{},
-		receiver: make(chan []byte, 32),
+		updates:  make(chan (<-chan []byte)),
+		receiver: make(chan []byte, 1024),
 	}
 
 	ws.conn.SetReadLimit(4096)
@@ -74,24 +76,27 @@ func (ws *webSocket) Send(msg []byte) error {
 }
 
 // Receive-only channel that cannot be closed by the requester
-func (ws *webSocket) Updates() <-chan []byte {
-	return ws.receiver
+func (ws *webSocket) Updates() chan (<-chan []byte) {
+	return ws.updates
 }
 
-func (ws *webSocket) Close() (err error) {
-	err = ws.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	return
+func (ws *webSocket) Close() error {
+	return ws.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
 // readPump forwards messages received from the websocket connection
 //
 // There is at most one reader per websocket connection
 func (ws *webSocket) readPump() {
+
 	defer func() {
 		ws.conn.Close()
+		close(ws.updates)
 		close(ws.receiver)
 		log.Println("closing ws conn")
 	}()
+
+	ws.updates <- ws.receiver
 
 	for {
 		_, b, err := ws.conn.ReadMessage() // blocks until message read or error
