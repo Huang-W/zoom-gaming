@@ -1,48 +1,201 @@
-var pb = require('./proto/signaling_pb');
+const pb = require('./proto/signaling_pb');
+const echo = require('./proto/echo_pb');
+import adapter from "node_modules/webrtc-adapter";
+import { DCLabel } from "./datachannel";
 
-var iceServer = new pb.RTCIceServer();
-iceServer.setUrlsList(["stun:stun.l.google.com:19302"]);
+(function() {
+  let echo_dc = null;
+  let webSocket = new WebSocket("ws://localhost:8080/demo");
+  webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
-var sdp = new pb.SessionDescription();
-sdp.setType(pb.SessionDescription.SDPType['SDP_TYPE_OFFER']);
-sdp.setSdp(`v=0
-o=alice 2890844526 2890844526 IN IP4 host.anywhere.com
-s=
-c=IN IP4 host.anywhere.com
-t=0 0
-m=audio 49170 RTP/AVP 0
-a=rtpmap:0 PCMU/8000
-m=video 51372 RTP/AVP 31
-a=rtpmap:31 H261/90000
-m=video 53000 RTP/AVP 32
-a=rtpmap:32 MPV/90000`);
+  webSocket.addEventListener("message", event => {
+    handleWebsocketEvent(event);
+  });
+  webSocket.addEventListener("close", event => {
+    console.log("ws closing");
+  });
+  webSocket.onerror = function(event) {
+    console.error("WebSocket error observed:", event);
+  };
 
-var iceCand = new pb.RTCIceCandidateInit();
-iceCand.setCandidate("candidate:4234997325 1 udp 2043278322 192.168.0.56 44323 typ host");
+  let peerConnection = null;
 
-var evt1 = new pb.SignalingEvent();
-// Checks which event is set
-// Possible choices:
-//
-// proto.SignalingEvent.EventCase = {
-//   EVENT_NOT_SET: 0,
-//   RTC_ICE_SERVER: 1,
-//   SESSION_DESCRIPTION: 2,
-//   RTC_ICE_CANDIDATE_INIT: 3
-// };
-//
-// https://developers.google.com/protocol-buffers/docs/reference/javascript-generated#oneof
+  let showError = (error) => {
+    console.log(error);
+    const errorNode = document.querySelector('#error');
+    if (errorNode.firstChild) {
+      errorNode.removeChild(errorNode.firstChild);
+    }
+    errorNode.appendChild(document.createTextNode(error.message || error));
+  }
 
-// 0
-console.log(evt1.getEventCase());
-evt1.setRtcIceServer(iceServer);
-// 1
-console.log(evt1.getEventCase());
+  let startSession = (offer) => {
+    let pb_sd = new pb.SessionDescription();
+    pb_sd.setType(pb.SessionDescription.SDPType.SDP_TYPE_OFFER);
+    pb_sd.setSdp(offer);
+    let signaling_event = new pb.SignalingEvent();
+    signaling_event.setSessionDescription(pb_sd);
+    let uint8_array = signaling_event.serializeBinary();
+    webSocket.send(uint8_array.buffer);
+  }
 
-var byte_array = evt1.serializeBinary();
-var evt2 = new pb.SignalingEvent.deserializeBinary(byte_array);
+  let createOffer = async (pc) => {
+    return new Promise((accept, reject) => {
+      pc.onicecandidate = evt => {
+        if (!evt.candidate) {
 
-console.log(evt1.toObject());
-console.log(evt2.toObject());
+          // ICE Gathering finished
+          const { sdp: offer } = pc.localDescription;
+          accept(offer);
+        }
+      };
+      pc.createOffer().then(ld => {pc.setLocalDescription(ld)}).catch(reject)
+    });
+  }
 
-console.log(evt1.toObject() == evt2.toObject());
+  let startRemoteSession = (remoteVideoNode, remoteAudioNode, stream) => {
+    let pc;
+
+    return Promise.resolve().then(() => {
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+
+      pc.addTransceiver('audio', {'direction': 'recvonly'})
+      pc.addTransceiver('video', {'direction': 'recvonly'})
+
+      pc.ontrack = (event) => {
+        console.info('ontrack triggered');
+        console.log(event);
+        if (event.track.kind == "video") {
+          remoteVideoNode.srcObject = event.streams[0]
+          remoteVideoNode.play()
+        }
+        if (event.track.kind == "audio") {
+          remoteAudioNode.srcObject = event.streams[0]
+          remoteAudioNode.play()
+        }
+      };
+
+      echo_dc = pc.createDataChannel(DCLabel.String(DCLabel.Label.ECHO), {
+        negotiated: true,
+        id: DCLabel.Id(DCLabel.Label.ECHO)
+      });
+
+      echo_dc.onopen = () => { console.log(`Data Channel ${echo_dc.label} - ${echo_dc.id} is open`); }
+      echo_dc.onclose = () => { console.log(`Data Channel ${echo_dc.label} - ${echo_dc.id} is closed`); }
+      echo_dc.onerror = (event) => { console.log(event); }
+      echo_dc.onmessage = (event) => {
+        let pb_echo = DCLabel.Label.PbMessageType(DCLabel.Label.ECHO);
+        let msg = new pb_echo.deserializeBinary(event.data);
+        console.log(`New data channel message on ${label} has arrived: `);
+        console.log(msg);
+      };
+
+      stream && stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+      });
+      return createOffer(pc);
+    }).then(offer => {
+      // console.info(offer);
+      startSession(offer);
+    }).then(() => pc);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let selectedScreen = 0;
+    const remoteVideo = document.querySelector('#remote-video');
+    const remoteAudio = document.querySelector('#remote-audio');
+    const screenSelect = document.querySelector('#screen-select');
+    const startStop = document.querySelector('#start-stop');
+
+    const option = document.createElement('option');
+    option.appendChild(document.createTextNode('Screen 1'));
+    option.setAttribute('value', 0);
+    screenSelect.appendChild(option);
+
+    screenSelect.addEventListener('change', evt => {
+      selectedScreen = parseInt(evt.currentTarget.value, 10);
+    });
+
+    const enableStartStop = (enabled) => {
+      if (enabled) {
+        startStop.removeAttribute('disabled');
+      } else {
+        startStop.setAttribute('disabled', '');
+      }
+    }
+
+    const setStartStopTitle = (title) => {
+      startStop.removeChild(startStop.firstChild);
+      startStop.appendChild(document.createTextNode(title));
+    }
+
+    startStop.addEventListener('click', () => {
+      enableStartStop(false);
+
+      const userMediaPromise =  (adapter.browserDetails.browser === 'safari') ?
+        navigator.mediaDevices.getUserMedia({ video: true }) :
+        Promise.resolve(null);
+      if (!peerConnection) {
+        userMediaPromise.then(stream => {
+          return startRemoteSession(remoteVideo, remoteAudio, stream).then(pc => {
+            remoteVideo.style.setProperty('visibility', 'visible');
+            peerConnection = pc;
+          }).catch(showError).then(() => {
+            enableStartStop(true);
+            setStartStopTitle('Stop');
+          });
+        })
+      } else {
+        peerConnection.close();
+        peerConnection = null;
+        enableStartStop(true);
+        setStartStopTitle('Start');
+        remoteVideo.style.setProperty('visibility', 'collapse');
+      }
+    });
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (peerConnection) {
+      peerConnection.close();
+    }
+    if (webSocket) {
+      webSocket.close();
+    }
+  });
+
+  let handleAnswer = (sdp) => {
+    if (sdp instanceof pb.SessionDescription) {
+      // console.info(sdp.getSdp());
+      peerConnection.setRemoteDescription({
+        type: "answer",
+        sdp: sdp.getSdp()
+      });
+    }
+  }
+
+  let handleWebsocketEvent = (event) => {
+    if ( Object.getPrototypeOf(event) === MessageEvent.prototype ) {
+      let signaling_event = new pb.SignalingEvent.deserializeBinary(event.data);
+      switch (signaling_event.getEventCase()) {
+        case pb.SignalingEvent.EventCase.SESSION_DESCRIPTION:
+          console.log("sdp!");
+          let pb_sdp = signaling_event.getSessionDescription();
+          handleAnswer(pb_sdp);
+          break;
+        case pb.SignalingEvent.EventCase.EVENT_NOT_SET:
+          console.log("SignalingEvent's event field is empty");
+          break;
+        default:
+          console.log("Unable to deserialize into pb.SignalingEvent");
+          break;
+      }
+    } else if ( Object.getPrototypeOf(event) === CloseEvent.prototype ) {
+      console.log("ws closing");
+    } else {
+      console.log(`Received event with prototype of ${Object.getPrototypeOf(event)}`);
+    }
+  }
+})()

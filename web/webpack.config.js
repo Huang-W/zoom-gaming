@@ -6,4 +6,9 @@ module.exports = {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
   },
+  resolve: {
+    alias: {
+      node_modules: path.resolve(__dirname, 'node_modules'),
+    },
+  },
 };

@@ -6,15 +6,15 @@ import (
 )
 
 // Helper Functions
-func FailOnError(err error, msg string) {
+func FailOnError(err error, format string, a ...interface{}) {
 	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-		panic(fmt.Sprintf("%s: %s", msg, err))
+		log.Fatalf(format, append(a, err)...)
+		panic(fmt.Sprintf(format, append(a, err)...))
 	}
 }
 
-func WarnOnError(err error, msg string) {
+func WarnOnError(err error, format string, a ...interface{}) {
 	if err != nil {
-		log.Printf("%s: %s", msg, err)
+		log.Printf(format, append(a, err)...)
 	}
 }

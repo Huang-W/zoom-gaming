@@ -37,7 +37,7 @@ var dcConfigs = map[DataChannelLabel](*webrtc.DataChannelInit){
 	Echo: &webrtc.DataChannelInit{
 		Ordered:    func(b bool) *bool { return &b }(true),
 		Negotiated: func(b bool) *bool { return &b }(true),
-		ID:         func(i uint16) *uint16 { return &i }(1111),
+		ID:         func(i uint16) *uint16 { return &i }(0),
 	},
 }
 

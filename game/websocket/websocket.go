@@ -38,7 +38,7 @@ func NewWebSocket(conn *websocket.Conn) WebSocket {
 		receiver: make(chan []byte, 1024),
 	}
 
-	ws.conn.SetReadLimit(4096)
+	ws.conn.SetReadLimit(16000)
 	ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	ws.conn.SetPongHandler(func(string) error {
 		ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
@@ -91,9 +91,9 @@ func (ws *webSocket) readPump() {
 
 	defer func() {
 		ws.conn.Close()
-		close(ws.updates)
 		close(ws.receiver)
-		log.Println("closing ws conn")
+		close(ws.updates)
+		log.Println("closed ws conn")
 	}()
 
 	ws.updates <- ws.receiver

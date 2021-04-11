@@ -21,5 +21,5 @@ Received messages that are not serialized using protobuf will still be logged to
 #### Tests
 
 - `go test -v zoomgaming/utils`
-- `go test -v -race zoomgaming/websocket``
+- `go test -v -race zoomgaming/websocket`
 - `go test -v -race zoomgaming/webrtc`

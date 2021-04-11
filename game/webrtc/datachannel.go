@@ -19,7 +19,6 @@ type dataChannel struct {
 	dc       *webrtc.DataChannel
 	updates  chan (<-chan proto.Message)
 	receiver chan proto.Message
-	send     chan struct{}
 }
 
 func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataChannel {
@@ -27,7 +26,6 @@ func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataCha
 	dc := &dataChannel{
 		dc:      dc_impl,
 		updates: make(chan (<-chan proto.Message)),
-		send:    make(chan struct{}),
 	}
 
 	dc_impl.OnOpen(func() {
@@ -51,17 +49,6 @@ func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataCha
 		dc.receiver <- pb_msg.Interface()
 	})
 
-	// Set bufferedAmountLowThreshold so that we can get notified when
-	// we can send more
-	dc_impl.SetBufferedAmountLowThreshold(bufferedAmountLowThreshold)
-
-	// This callback is made when the current bufferedAmount becomes lower than the threadshold
-	dc_impl.OnBufferedAmountLow(func() {
-
-		dc.send <- struct{}{}
-
-	})
-
 	dc_impl.OnClose(func() {
 		close(dc.receiver)
 		log.Println("Data channel closed")
@@ -78,13 +65,7 @@ func (dc *dataChannel) Send(msg proto.Message) error {
 		return err
 	}
 
-	// block if the size of the stream's buffer exceeds 1 MB
-	if dc.dc.BufferedAmount()+uint64(len(b)) > maxBufferedAmount {
-		<-dc.send
-	}
-
-	dc.dc.Send(b)
-	return nil
+	return dc.dc.Send(b)
 }
 
 func (dc *dataChannel) Updates() chan (<-chan proto.Message) {
@@ -93,6 +74,6 @@ func (dc *dataChannel) Updates() chan (<-chan proto.Message) {
 
 func (dc *dataChannel) Close() error {
 
-	err := dc.Close()
+	err := dc.dc.Close()
 	return err
 }

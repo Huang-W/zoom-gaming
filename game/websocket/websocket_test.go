@@ -30,25 +30,12 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	ws = NewWebSocket(c)
 
 	updates := ws.Updates()
-	for {
-		select {
-		case ch, ok := <-updates:
-			if !ok {
-				return
+	for ch := range updates {
+		go func() {
+			for msg := range ch {
+				ws.Send(msg)
 			}
-			// start a go routine to echo messages once a channel is opened
-			go func() {
-				for {
-					select {
-					case msg, ok := <-ch:
-						if !ok {
-							return
-						}
-						ws.Send(msg)
-					}
-				}
-			}()
-		}
+		}()
 	}
 }
 
