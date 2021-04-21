@@ -1,0 +1,907 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ButtonTabooCard renders correctly ButtonTabooCard renders children prop if provided 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+}
+
+.c4:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c4:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c4:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c4:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c5 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+  color: #f7f9f9;
+  background-color: #8AC926;
+}
+
+.c5:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c5:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c5:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c5:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c5:focus {
+  outline: solid 2px #f7f9f9;
+}
+
+.c3 {
+  margin-top: 1.5rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+<div
+  className="c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <h1>
+      I am a child property
+    </h1>
+  </div>
+  <div
+    className="c3"
+  >
+    <button
+      className="c4"
+      onClick={[MockFunction]}
+    >
+      Back
+    </button>
+    <button
+      className="c5"
+      onClick={[MockFunction]}
+    >
+      Next
+    </button>
+  </div>
+</div>
+`;
+
+exports[`ButtonTabooCard renders correctly ButtonTabooCard renders correctly when list is provided 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2.7rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.c3 {
+  list-style-type: none;
+}
+
+.c6 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+}
+
+.c6:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c6:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c6:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c6:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c7 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+  color: #f7f9f9;
+  background-color: #8AC926;
+}
+
+.c7:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c7:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c7:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c7:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c7:focus {
+  outline: solid 2px #f7f9f9;
+}
+
+.c5 {
+  margin-top: 1.5rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+<div
+  className="c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <ul
+      className="c3"
+    >
+      <li
+        className="c4"
+      >
+        word1
+      </li>
+      <li
+        className="c4"
+      >
+        word2
+      </li>
+      <li
+        className="c4"
+      >
+        word3
+      </li>
+    </ul>
+  </div>
+  <div
+    className="c5"
+  >
+    <button
+      className="c6"
+      onClick={[MockFunction]}
+    >
+      Back
+    </button>
+    <button
+      className="c7"
+      onClick={[MockFunction]}
+    >
+      Next
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Layered TabooCard renders correctly Bottom LayeredTabooCard has correct styles 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  margin-bottom: 0rem;
+  color: #a23b72;
+  z-index: -15;
+  -webkit-transform: translate(-50%,-50%) rotate(-5deg);
+  -ms-transform: translate(-50%,-50%) rotate(-5deg);
+  transform: translate(-50%,-50%) rotate(-5deg);
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c0:before {
+  display: none;
+}
+
+.c0:after {
+  display: inline-block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: lightgray;
+  opacity: 0.5;
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2.7rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.c3 {
+  list-style-type: none;
+}
+
+<div
+  className="sc-AxjAm c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <ul
+      className="c3"
+    >
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`Layered TabooCard renders correctly Middle LayeredTabooCard renders correctly 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  margin-bottom: 0rem;
+  color: #8AC926;
+  z-index: -10;
+  -webkit-transform: translate(-50%,-50%) rotate(16deg);
+  -ms-transform: translate(-50%,-50%) rotate(16deg);
+  transform: translate(-50%,-50%) rotate(16deg);
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c0:before {
+  display: none;
+}
+
+.c0:after {
+  display: inline-block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: lightgray;
+  opacity: 0.5;
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2.7rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.c3 {
+  list-style-type: none;
+}
+
+<div
+  className="sc-AxjAm c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <ul
+      className="c3"
+    >
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`Layered TabooCard renders correctly Top LayeredTabooCard renders correctly 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  margin-bottom: 0rem;
+  color: #ee5b2c;
+  z-index: -5;
+  -webkit-transform: translate(-50%,-50%) rotate(-20deg);
+  -ms-transform: translate(-50%,-50%) rotate(-20deg);
+  transform: translate(-50%,-50%) rotate(-20deg);
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c0:before {
+  display: none;
+}
+
+.c0:after {
+  display: inline-block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: lightgray;
+  opacity: 0.5;
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2.7rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.c3 {
+  list-style-type: none;
+}
+
+<div
+  className="sc-AxjAm c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <ul
+      className="c3"
+    >
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+      <li
+        className="c4"
+      >
+        Taboo!
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`TabooCard renders and functions correctly TabooCard renders correctly when list is passed  1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c4 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2.7rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.c3 {
+  list-style-type: none;
+}
+
+<div
+  className="c0"
+>
+  <div
+    className="c1"
+  >
+    taboo
+  </div>
+  <div
+    className="c2"
+  >
+    <ul
+      className="c3"
+    >
+      <li
+        className="c4"
+      >
+        word1
+      </li>
+      <li
+        className="c4"
+      >
+        word2
+      </li>
+      <li
+        className="c4"
+      >
+        word3
+      </li>
+    </ul>
+  </div>
+</div>
+`;
+
+exports[`TabooCardTop renders correctly 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+<div
+  className="c0"
+>
+  <div
+    className="c1"
+  />
+</div>
+`;

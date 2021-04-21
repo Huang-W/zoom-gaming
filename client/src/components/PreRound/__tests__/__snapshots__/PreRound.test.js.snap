@@ -1,0 +1,70 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PreRound renders and functions correctly PreRound renders correctly 1`] = `
+Array [
+  <div
+    className="sc-fzqNJr lpgMoX"
+  >
+    <p
+      className="sc-fzoyAV TIEGc"
+    >
+      Scores
+    </p>
+    <ul
+      className="sc-Axmtr dHjpTi"
+    >
+      <li
+        className="sc-fzoLag ebyzUM"
+      >
+        Team 
+        1
+        : 
+        <span>
+          3
+        </span>
+      </li>
+      <li
+        className="sc-fzoLag ebyzUM"
+      >
+        Team 
+        2
+        : 
+        <span>
+          5
+        </span>
+      </li>
+    </ul>
+  </div>,
+  <div
+    className="sc-AxjAm hDlFTS"
+  >
+    <div
+      className="sc-AxiKw dGnLMo"
+    >
+      Just Relax!
+    </div>
+    <div
+      className="sc-AxhCb JZaCe"
+    >
+      <p
+        className="sc-fzokOt kxxFRs"
+      >
+        It's the other team's turn to guess! 
+        <span
+          className="sc-fzqBZW hgCjBU"
+        >
+          Danielle
+        </span>
+         will be giving the clues, and
+         
+        <span
+          className="sc-fzqBZW hgCjBU"
+        >
+          Stephen
+        </span>
+         will be checking for any illegal clues.
+      </p>
+    </div>
+  </div>,
+]
+`;

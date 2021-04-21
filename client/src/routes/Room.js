@@ -4,17 +4,17 @@ import Peer from "simple-peer";
 import styled from "styled-components";
 
 const Container = styled.div`
-    padding: 20px;
+    padding: 10px;
     display: flex;
-    height: 100vh;
-    width: 90%;
-    margin: auto;
+    justify-content: center;
+    width: 100vw;
+    margin-left: -37vw;
     flex-wrap: wrap;
 `;
 
 const StyledVideo = styled.video`
-    height: 40%;
-    width: 50%;
+    width: 20%;
+    height: fit-content;
 `;
 
 const Video = (props) => {
@@ -42,7 +42,7 @@ const Room = (props) => {
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
-    const roomID = props.match.params.roomID;
+    const roomID = props.gamecode;
 
     useEffect(() => {
         socketRef.current = io.connect("/");
@@ -114,7 +114,7 @@ const Room = (props) => {
             <StyledVideo muted ref={userVideo} autoPlay playsInline />
             {peers.map((peer, index) => {
                 return (
-                    <Video key={index} peer={peer} />
+                  <Video key={index} peer={peer} />
                 );
             })}
         </Container>

@@ -1,0 +1,250 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PostRound renders and functions correctly PostRound renders correctly when role is not watcher 1`] = `
+<div
+  className="sc-fznJRM jfTSqx"
+>
+  <div
+    className="sc-AxjAm hDlFTS"
+  >
+    <div
+      className="sc-AxiKw dGnLMo"
+    >
+      Cards Played
+    </div>
+    <div
+      className="sc-AxhCb JZaCe"
+    >
+      <p
+        className="sc-AxheI fpDqsA"
+      >
+        correct
+      </p>
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-AxgMl fFkiZt"
+        >
+          Kendrick Lamar
+        </li>
+      </ul>
+      <p
+        className="sc-AxheI fpDqsA"
+      >
+        skipped
+      </p>
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-AxgMl fFkiZt"
+        >
+          Simba
+        </li>
+      </ul>
+      <p
+        className="sc-AxheI fpDqsA"
+      >
+        discard
+      </p>
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-AxgMl fFkiZt"
+        >
+          Will Smith
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`PostRound renders and functions correctly PostRound renders correctly when role is watcher 1`] = `
+<div
+  className="sc-fznJRM jfTSqx"
+>
+  <p
+    className="sc-fzokOt itUVmo"
+  >
+    Review the cards from this round below. Select the word and click the button to change it's status. Select 
+    <span
+      className="sc-fznxsB gTdnEB"
+    >
+      Confirm!
+    </span>
+     when done to calculate scores.
+  </p>
+  <div
+    className="sc-AxjAm hDlFTS"
+  >
+    <div
+      className="sc-AxiKw dGnLMo"
+    >
+      correct
+    </div>
+    <div
+      className="sc-AxhCb JZaCe"
+    >
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-fzqBZW iVohld"
+        >
+          <input
+            checked={false}
+            className="sc-fzqNJr iGpCVv"
+            id="Kendrick Lamar"
+            name="correct"
+            onChange={[Function]}
+            type="radio"
+            value={0}
+          />
+          <label
+            className="sc-fzoyAV iZMDEE"
+            htmlFor="Kendrick Lamar"
+          >
+            Kendrick Lamar
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div
+      className="sc-fzplWN buDbqD"
+    >
+      <button
+        className="sc-AxmLO gmmVt button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        skipped
+      </button>
+      <button
+        className="sc-AxmLO sc-fzozJi jlLOkV button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        discard
+      </button>
+    </div>
+  </div>
+  <div
+    className="sc-AxjAm hDlFTS"
+  >
+    <div
+      className="sc-AxiKw dGnLMo"
+    >
+      skipped
+    </div>
+    <div
+      className="sc-AxhCb JZaCe"
+    >
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-fzqBZW iVohld"
+        >
+          <input
+            checked={false}
+            className="sc-fzqNJr iGpCVv"
+            id="Simba"
+            name="skipped"
+            onChange={[Function]}
+            type="radio"
+            value={1}
+          />
+          <label
+            className="sc-fzoyAV iZMDEE"
+            htmlFor="Simba"
+          >
+            Simba
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div
+      className="sc-fzplWN buDbqD"
+    >
+      <button
+        className="sc-AxmLO gmmVt button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        correct
+      </button>
+      <button
+        className="sc-AxmLO sc-fzozJi jlLOkV button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        discard
+      </button>
+    </div>
+  </div>
+  <div
+    className="sc-AxjAm hDlFTS"
+  >
+    <div
+      className="sc-AxiKw dGnLMo"
+    >
+      discard
+    </div>
+    <div
+      className="sc-AxhCb JZaCe"
+    >
+      <ul
+        className="sc-Axmtr dHjpTi"
+      >
+        <li
+          className="sc-fzqBZW iVohld"
+        >
+          <input
+            checked={false}
+            className="sc-fzqNJr iGpCVv"
+            id="Will Smith"
+            name="discard"
+            onChange={[Function]}
+            type="radio"
+            value={2}
+          />
+          <label
+            className="sc-fzoyAV iZMDEE"
+            htmlFor="Will Smith"
+          >
+            Will Smith
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div
+      className="sc-fzplWN buDbqD"
+    >
+      <button
+        className="sc-AxmLO gmmVt button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        correct
+      </button>
+      <button
+        className="sc-AxmLO sc-fzozJi jlLOkV button"
+        disabled={true}
+        onClick={[Function]}
+      >
+        skipped
+      </button>
+    </div>
+  </div>
+  <button
+    className="sc-AxmLO sc-fzoLsD cyAtQH"
+    disabled={false}
+    onClick={[Function]}
+  >
+    Confirm!
+  </button>
+</div>
+`;

@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`JoinGameForm renders correctly 1`] = `
+<form
+  action="#"
+  className="sc-AxjAm hyBwHU"
+  id="joinGameForm"
+  onReset={[Function]}
+  onSubmit={[Function]}
+>
+  <div
+    className="sc-AxirZ itgPJw"
+  >
+    <label
+      className="sc-Axmtr sc-AxmLO jMZnwH"
+      htmlFor="name"
+    >
+      Enter Your Name
+    </label>
+    <input
+      className="sc-AxhUy dcifbi"
+      id="name"
+      name="name"
+      onBlur={[Function]}
+      onChange={[Function]}
+      placeholder=""
+      tabIndex="1"
+      type="text"
+      value=""
+    />
+  </div>
+  <div
+    className="sc-AxirZ itgPJw"
+  >
+    <label
+      className="sc-Axmtr sc-AxmLO jMZnwH"
+      htmlFor="gamecode"
+    >
+      Enter a Game Code
+    </label>
+    <input
+      className="sc-AxhUy dcifbi"
+      id="gamecode"
+      name="gamecode"
+      onBlur={[Function]}
+      onChange={[Function]}
+      placeholder=""
+      tabIndex="1"
+      type="text"
+      value="remote"
+    />
+  </div>
+</form>
+`;
