@@ -6,4 +6,31 @@ package input;
 
 // Contains input-related message definitions for both browser-client and server
 //
-// For use with WebRTC data channel (no gRPC service definition needed)
+// For use with WebRTC data channel
+
+message InputEvent {
+  oneof Event {
+    KeyPressEvent key_press_event = 1;
+  }
+}
+
+message KeyPressEvent {
+  enum Direction {
+    DIRECTION_UNSPECIFIED = 0;
+    DIRECTION_UP = 1;
+    DIRECTION_DOWN = 2;
+  }
+  enum Key {
+    KEY_UNSPECIFIED = 0;
+    KEY_ARROW_UP = 1;
+    KEY_ARROW_DOWN = 2;
+    KEY_ARROW_LEFT = 3;
+    KEY_ARROW_RIGHT = 4;
+    KEY_SPACE = 5;
+    KEY_KEY_A = 6;
+    KEY_KEY_S = 7;
+    KEY_KEY_D = 8;
+  }
+  Direction direction = 1;
+  Key key = 2;
+}

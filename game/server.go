@@ -10,11 +10,7 @@ import (
 	"github.com/unrolled/render"
 	"github.com/urfave/negroni"
 
-	proto "google.golang.org/protobuf/proto"
-
-	pb "zoomgaming/proto"
 	room "zoomgaming/room"
-	zwebrtc "zoomgaming/webrtc"
 	zws "zoomgaming/websocket"
 )
 
@@ -35,6 +31,7 @@ func NewServer() *negroni.Negroni {
 	var err error
 	r, err = room.NewRoom()
 	if err != nil {
+		log.Printf("Failed to create a room :%s", err)
 		os.Exit(1)
 	}
 	formatter := render.New(render.Options{
@@ -52,85 +49,12 @@ func NewServer() *negroni.Negroni {
 // https://pkg.go.dev/github.com/gorilla/mux#Router
 func initRoutes(mx *mux.Router, formatter *render.Render) {
 	mx.HandleFunc("/ping", pingHandler(formatter)).Methods("GET")
-	mx.HandleFunc("/ws", websocketHandler(formatter)).Methods("GET")
-	mx.HandleFunc("/webrtc", webrtcHandler(formatter)).Methods("GET")
 	mx.HandleFunc("/demo", demoHandler(formatter)).Methods("GET")
 }
 
 func pingHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		formatter.JSON(w, http.StatusOK, struct{ Test string }{"Game server is alive!"})
-	}
-}
-
-// WebSocket Echo server
-func websocketHandler(formatter *render.Render) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-
-		conn, err := upgrader.Upgrade(w, req, nil)
-		if err != nil {
-			log.Printf("upgrading http request: %s", err)
-			return
-		}
-
-		ws := zws.NewWebSocket(conn)
-
-		// test - log all received messages to console
-		go func() {
-			updates := ws.Updates()
-			for ch := range updates {
-				for msg := range ch {
-					log.Println("received", msg)
-					// echo back to browser
-					ws.Send(msg)
-				}
-			}
-		}()
-
-		// test1
-		msg := &pb.SignalingEvent{
-			Event: &pb.SignalingEvent_RtcIceServer{
-				RtcIceServer: &pb.RTCIceServer{
-					Urls: []string{"stun:stun.l.google.com:19302"},
-				},
-			},
-		}
-		b, _ := proto.Marshal(msg)
-		ws.Send(b)
-	}
-}
-
-// WebRTC server
-// Sends an offer to the browser client
-//
-// Echoes back any messages reveived on the data chnnale with label of "Echo"
-func webrtcHandler(formatter *render.Render) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-
-		conn, err := upgrader.Upgrade(w, req, nil)
-		if err != nil {
-			log.Printf("upgrading http request: %s", err)
-			return
-		}
-
-		ws := zws.NewWebSocket(conn)
-
-		rtc, err := zwebrtc.NewWebRTC(ws, nil, nil)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		go func() {
-			updates := rtc.DataChannels()
-			for ch := range updates {
-				for msg := range ch {
-					log.Println(msg)
-					// echo back to browser
-					rtc.Send(msg)
-				}
-			}
-		}()
 	}
 }
 

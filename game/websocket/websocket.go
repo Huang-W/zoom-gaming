@@ -38,7 +38,7 @@ func NewWebSocket(conn *websocket.Conn) WebSocket {
 		receiver: make(chan []byte, 1024),
 	}
 
-	ws.conn.SetReadLimit(16000)
+	ws.conn.SetReadLimit(32000)
 	ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	ws.conn.SetPongHandler(func(string) error {
 		ws.conn.SetReadDeadline(time.Now().Add(60 * time.Second))

@@ -1,6 +1,7 @@
 "use strict";
 const jspb = require('google-protobuf');
 const echo = require('./proto/echo_pb');
+const input = require('./proto/input_pb');
 
 var DCLabel = {
   /**
@@ -28,9 +29,9 @@ var DCLabel = {
    * @return {number}
    */
   Id: (label) => {
-    if (label == DCLabel.Label.ECHO)
+    if (label == DCLabel.Label.GAME_INPUT)
       return 0;
-    else if (label == DCLabel.Label.GAME_INPUT)
+    else if (label == DCLabel.Label.ECHO)
       return 1;
     else
       throw new Error("Invalid label: " + label);
@@ -43,7 +44,7 @@ var DCLabel = {
     if (label == DCLabel.Label.ECHO)
       return echo.Echo;
     else if (label == DCLabel.Label.GAME_INPUT)
-      throw new Error("GameInput channel has not been implemented");
+      return input.InputEvent;
     else
       throw new Error("Invalid label: " + label);
   }

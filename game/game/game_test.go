@@ -2,10 +2,7 @@ package game
 
 import (
 	_ "context"
-	"sync"
 	"time"
-
-	"github.com/pion/rtp"
 
 	proto "google.golang.org/protobuf/proto"
 
@@ -14,13 +11,7 @@ import (
 
 func ExampleInputs() {
 
-	pool := &sync.Pool{
-		New: func() interface{} {
-			return new(rtp.Packet)
-		},
-	}
-
-	g, _ := NewGame(TestGame, pool)
+	g, _ := NewGame(TestGame)
 	defer g.Close()
 
 	input1 := make(chan proto.Message)

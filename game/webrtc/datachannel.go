@@ -42,6 +42,7 @@ func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataCha
 		var pb_msg pref.Message = mapping[label].New()
 		err := proto.Unmarshal(b, pb_msg.Interface())
 		if err != nil {
+			log.Printf("error unmarshalling")
 			return
 		}
 

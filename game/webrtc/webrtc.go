@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v3"
 
@@ -25,7 +26,7 @@ The local session description is offered only once.
 
 // Created data Channels and supported message types
 // Data channels ARE negotiated in advance - make sure to create them in browser.
-Echo: pb.Echo
+GameInput: pb.GameInput
 
 // Media Tracks
 None
@@ -38,20 +39,22 @@ Unable to implement Perfect negotiation w/ "impolite" peer
 
 type WebRTC interface {
 	DataChannels() chan (<-chan proto.Message)
-	Streaming() <-chan struct{}
+	// Broadcast() chan (<-chan *webrtc.TrackLocalStaticRTP)
+	// AddTrack(*webrtc.TrackLocalStaticRTP)
 	Send(proto.Message) error // send a message to the client
 	Close() error             // close the connection
 }
 
 // The server in a client-server connection between two webrtc agents
 type webRTC struct {
-	conn *webrtc.PeerConnection
+	conn       *webrtc.PeerConnection
 	videoTrack *webrtc.TrackLocalStaticRTP
 	audioTrack *webrtc.TrackLocalStaticRTP
+	id         uuid.UUID // identifier to distinguish this connection from others
 
-	ws                zws.WebSocket                      // WebSocket connection used for signaling
-	updates           chan (<-chan proto.Message)        // notify the listener of any new data chhanels
-	streaming chan struct{} // notify the listener of successful ICE Connection state
+	ws      zws.WebSocket               // WebSocket connection used for signaling
+	updates chan (<-chan proto.Message) // notify the listener of any new data chhanels
+	// trackUpdates      chan (<-chan *webrtc.TrackLocalStaticRTP) // notify the listener of any new media tracks from the browser
 	dataChannels      map[DataChannelLabel](DataChannel) // use this mapping to send messages to the browser
 	mu                *sync.Mutex                        // protects candidates
 	pendingCandidates []*webrtc.ICECandidate             // save candidates for after the browser answers
@@ -68,11 +71,12 @@ func NewWebRTC(ws zws.WebSocket, videoTrack *webrtc.TrackLocalStaticRTP, audioTr
 	}()
 
 	w := &webRTC{
-		ws:                ws,
+		ws:         ws,
 		videoTrack: videoTrack,
 		audioTrack: audioTrack,
-		updates:           make(chan (<-chan proto.Message)),
-		streaming: make(chan struct{}),
+		id:         uuid.New(),
+		updates:    make(chan (<-chan proto.Message)),
+		// trackUpdates:      make(chan (<-chan *webrtc.TrackLocalStaticRTP)),
 		dataChannels:      make(map[DataChannelLabel](DataChannel)),
 		mu:                &sync.Mutex{},
 		pendingCandidates: make([]*webrtc.ICECandidate, 0),
@@ -91,10 +95,11 @@ func (w *webRTC) DataChannels() chan (<-chan proto.Message) {
 	return w.updates
 }
 
-func (w *webRTC) Streaming() <-chan struct{} {
-	return w.streaming
+/**
+func (w *webRTC) Broadcast() chan (<-chan *webrtc.TrackLocalStaticRTP) {
+	return w.trackUpdates
 }
-
+*/
 // Send a message to the browser idiomatically based on message type
 func (w *webRTC) Send(msg proto.Message) error {
 
@@ -132,6 +137,7 @@ func (w *webRTC) watchWebSocket() {
 		}
 		log.Println("ws closing...")
 		close(w.updates)
+		w.conn.Close()
 	}()
 
 	wsOpen := w.ws.Updates()
@@ -159,12 +165,12 @@ func (w *webRTC) watchWebSocket() {
 
 				case *pb.SignalingEvent_RtcIceServer:
 
-					continue // not expected from client
+					continue // no longer used
 
 				case *pb.SignalingEvent_SessionDescription:
 
 					err := w.handleSessionDescription(&msg)
-					zutils.WarnOnError(err, "Error handling session description message on WS: %s")
+					zutils.WarnOnError(err, "Error handling client offer: %s")
 
 				case *pb.SignalingEvent_RtcIceCandidateInit:
 
@@ -186,7 +192,9 @@ func (w *webRTC) watchWebSocket() {
 	log.Println("exited?")
 }
 
-// Received a session description from the browser client
+// Received an offer from the browser client
+//
+// FIRST
 func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 
 	sdp_pb := msg.GetSessionDescription()
@@ -200,10 +208,11 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 	m := &webrtc.MediaEngine{}
 
 	videoRTCPFeedback := []webrtc.RTCPFeedback{{"goog-remb", ""}, {"ccm", "fir"}, {"nack", ""}, {"nack", "pli"}}
+	/**
 	videoRTPCodecParameters := []webrtc.RTPCodecParameters{
 		{RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000, RTCPFeedback: videoRTCPFeedback}, PayloadType: 96},
 	}
-	/**
+	*/
 	// Setup the codecs you want to use.
 	// We'll use a VP8 and Opus but you can also define your own
 	videoRTPCodecParameters := []webrtc.RTPCodecParameters{
@@ -217,7 +226,7 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 		}, PayloadType: 108},
 		{RTPCodecCapability: webrtc.RTPCodecCapability{
 			MimeType: webrtc.MimeTypeH264, ClockRate: 90000, RTCPFeedback: videoRTCPFeedback,
-			}, PayloadType: 123},
+		}, PayloadType: 123},
 		{RTPCodecCapability: webrtc.RTPCodecCapability{
 			MimeType: webrtc.MimeTypeH264, ClockRate: 90000, RTCPFeedback: videoRTCPFeedback,
 			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
@@ -227,7 +236,6 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42001f",
 		}, PayloadType: 127},
 	}
-	*/
 
 	for _, codec := range videoRTPCodecParameters {
 		if err := m.RegisterCodec(codec, webrtc.RTPCodecTypeVideo); err != nil {
@@ -236,8 +244,8 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 	}
 
 	if err := m.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus, ClockRate: 48000, Channels: 2},
-		PayloadType:        111,
+		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus},
+		PayloadType:        96,
 	}, webrtc.RTPCodecTypeAudio); err != nil {
 		return err
 	}
@@ -311,18 +319,18 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 		}
 	}()
 
-	// WebRTC Data Channel - Echo
+	// WebRTC Data Channel - GameInput
 	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	echo_impl, err := w.conn.CreateDataChannel(Echo.String(), dcConfigs[Echo])
+	input_impl, err := w.conn.CreateDataChannel(GameInput.String(), dcConfigs[GameInput])
 	if err != nil {
 		return err
 	}
 
-	echo := NewDataChannel(Echo, echo_impl)
-	w.dataChannels[Echo] = echo
+	input := NewDataChannel(GameInput, input_impl)
+	w.dataChannels[GameInput] = input
 
 	go func() {
-		updates := echo.Updates()
+		updates := input.Updates()
 		for ch := range updates {
 			w.updates <- ch
 		}
@@ -330,7 +338,7 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 
 	if err := w.conn.SetRemoteDescription(webrtc.SessionDescription{
 		Type: webrtc.SDPTypeOffer,
-		SDP: offerStr,
+		SDP:  offerStr,
 	}); err != nil {
 		return err
 	}
@@ -362,18 +370,58 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 		log.Printf("ICE Connection State has changed: %s", connectionState.String())
 		if connectionState == webrtc.ICEConnectionStateConnected {
 			log.Println("ConnectionStateConnected")
-			w.streaming <- struct{}{}
 		}
 		if connectionState == webrtc.ICEConnectionStateFailed || connectionState == webrtc.ICEConnectionStateClosed || connectionState == webrtc.ICEConnectionStateDisconnected {
-			if w.conn != nil {
-				w.conn.Close()
-			}
+			w.Close()
 		}
 	})
 
 	w.conn.OnICEGatheringStateChange(func(s webrtc.ICEGathererState) {
 		log.Println("ICE Gatherer State: ", s.String())
 	})
+	/**
+	w.conn.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		// Create a local track, all our SFU clients will be fed via this track
+		localTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(
+			remoteTrack.Codec().RTPCodecCapability,
+			fmt.Sprintf("%s-%s", remoteTrack.Kind().String(), w.id.String()),
+			"PlayerStream",
+		)
+		if newTrackErr != nil {
+			log.Printf("Error creating local track: %s", newTrackErr)
+			return
+		}
 
+		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
+		go func() {
+			ticker := time.NewTicker(rtcpPLIInterval)
+			for range ticker.C {
+				if rtcpSendErr := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
+					fmt.Println(rtcpSendErr)
+				}
+			}
+		}()
+
+		w.trackUpdates <- localTrack
+
+		go func() {
+			rtpBuf := make([]byte, 1600)
+			for {
+				i, _, readErr := remoteTrack.Read(rtpBuf)
+				if readErr != nil {
+					log.Printf("read error: %s", err)
+					return
+				}
+
+				// ErrClosedPipe means we don't have any subscribers, this is ok if no peers have connected yet
+				if _, err = localTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+					log.Printf("write error: %s", err)
+					return
+				}
+			}
+		}()
+	})
+	*/
 	return nil
 }

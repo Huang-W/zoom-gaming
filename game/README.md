@@ -5,21 +5,14 @@
 - [Install latest version of Go](https://golang.org/doc/install)
 - `go env -w GO111MODULE=on`
 - `go run main.go server.go`
+- `echo KERNEL==\"uinput\", GROUP=\"$USER\", MODE:=\"0660\" | sudo tee /etc/udev/rules.d/99-$USER.rules` Linux uinput
+- `sudo udevadm trigger`
 
-#### Description
+#### Keyboard Mappings for demo game
 
-
-
-#### Testing Browser
-
-Test browser websocket code with the `ws://localhost:8080/ws` endpoint. Any messages with class pb.SignalingEvent will be echoed back to the sender.
-
-Test browser webrtc code with the `ws://localhost:8080/webrtc` endpoint. Any messages on the "Echo" data channel will be echoed back to the sender. No support for media streams yet.
-
-Received messages that are not serialized using protobuf will still be logged to console.
+- [PCGamingWiki - Lovers in a Dangerous Spacetime](https://www.pcgamingwiki.com/wiki/Lovers_in_a_Dangerous_Spacetime)
 
 #### Tests
 
 - `go test -v zoomgaming/utils`
 - `go test -v -race zoomgaming/websocket`
-- `go test -v -race zoomgaming/webrtc`

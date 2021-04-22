@@ -1,13 +1,20 @@
 const pb = require('./proto/signaling_pb');
 const echo = require('./proto/echo_pb');
+const input = require('./proto/input_pb');
 import adapter from "node_modules/webrtc-adapter";
 import { DCLabel } from "./datachannel";
+import { InputMap } from "./input";
+
+const SERVER_ADDR = "35.232.40.2";
 
 (function() {
-  let echo_dc = null;
-  let webSocket = new WebSocket("ws://localhost:8080/demo");
+  let input_dc = null;
+  let webSocket = new WebSocket(`ws://${SERVER_ADDR}:8080/demo`);
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
+  webSocket.addEventListener("open", event => {
+    console.log("ws open");
+  })
   webSocket.addEventListener("message", event => {
     handleWebsocketEvent(event);
   });
@@ -61,39 +68,60 @@ import { DCLabel } from "./datachannel";
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
 
+      // game streaming
       pc.addTransceiver('audio', {'direction': 'recvonly'})
       pc.addTransceiver('video', {'direction': 'recvonly'})
+
+      // camera + mic
+      // pc.addTransceiver('audio', {'direction': 'sendonly'})
+      // pc.addTransceiver('video', {'direction': 'sendonly'})
 
       pc.ontrack = (event) => {
         console.info('ontrack triggered');
         console.log(event);
         if (event.track.kind == "video") {
           remoteVideoNode.srcObject = event.streams[0]
-          remoteVideoNode.play()
         }
         if (event.track.kind == "audio") {
           remoteAudioNode.srcObject = event.streams[0]
-          remoteAudioNode.play()
         }
       };
 
-      echo_dc = pc.createDataChannel(DCLabel.String(DCLabel.Label.ECHO), {
+      input_dc = pc.createDataChannel(DCLabel.String(DCLabel.Label.GAME_INPUT), {
         negotiated: true,
-        id: DCLabel.Id(DCLabel.Label.ECHO)
+        id: DCLabel.Id(DCLabel.Label.GAME_INPUT)
       });
 
-      echo_dc.onopen = () => { console.log(`Data Channel ${echo_dc.label} - ${echo_dc.id} is open`); }
-      echo_dc.onclose = () => { console.log(`Data Channel ${echo_dc.label} - ${echo_dc.id} is closed`); }
-      echo_dc.onerror = (event) => { console.log(event); }
-      echo_dc.onmessage = (event) => {
-        let pb_echo = DCLabel.Label.PbMessageType(DCLabel.Label.ECHO);
-        let msg = new pb_echo.deserializeBinary(event.data);
-        console.log(`New data channel message on ${label} has arrived: `);
-        console.log(msg);
-      };
+      input_dc.onopen = () => { console.log(`Data Channel ${input_dc.label} - ${input_dc.id} is open`); }
+      input_dc.onclose = () => { console.log(`Data Channel ${input_dc.label} - ${input_dc.id} is closed`); }
+      input_dc.onerror = (event) => { console.log(event); }
+
+      document.addEventListener('keydown', (event) => {
+        if (!event.repeat && InputMap.has(event.code)) {
+          let input_msg = new input.InputEvent();
+          let key_press_event = new input.KeyPressEvent();
+          key_press_event.setDirection(input.KeyPressEvent.Direction.DIRECTION_DOWN);
+          key_press_event.setKey(InputMap.get(event.code));
+          input_msg.setKeyPressEvent(key_press_event);
+          input_dc.send(input_msg.serializeBinary().buffer);
+        }
+        console.log(event.code);
+      });
+
+      document.addEventListener('keyup', (event) => {
+        if (InputMap.has(event.code)) {
+          let input_msg = new input.InputEvent();
+          let key_press_event = new input.KeyPressEvent();
+          key_press_event.setDirection(input.KeyPressEvent.Direction.DIRECTION_UP);
+          key_press_event.setKey(InputMap.get(event.code));
+          input_msg.setKeyPressEvent(key_press_event);
+          input_dc.send(input_msg.serializeBinary().buffer);
+        }
+        console.log(event.code);
+      });
 
       stream && stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
+        // pc.addTrack(track, stream);
       });
       return createOffer(pc);
     }).then(offer => {
@@ -104,6 +132,7 @@ import { DCLabel } from "./datachannel";
 
   document.addEventListener('DOMContentLoaded', () => {
     let selectedScreen = 0;
+    const localVideo = document.querySelector('#local-video');
     const remoteVideo = document.querySelector('#remote-video');
     const remoteAudio = document.querySelector('#remote-audio');
     const screenSelect = document.querySelector('#screen-select');
@@ -134,11 +163,14 @@ import { DCLabel } from "./datachannel";
     startStop.addEventListener('click', () => {
       enableStartStop(false);
 
-      const userMediaPromise =  (adapter.browserDetails.browser === 'safari') ?
-        navigator.mediaDevices.getUserMedia({ video: true }) :
-        Promise.resolve(null);
+      const videoConstraints = {
+          height: { ideal: 300, max: 720 },
+          width: { ideal: 400, max: 1280 }
+      };
+      const userMediaPromise = Promise.resolve(null); // navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
       if (!peerConnection) {
         userMediaPromise.then(stream => {
+          localVideo.srcObject = stream;
           return startRemoteSession(remoteVideo, remoteAudio, stream).then(pc => {
             remoteVideo.style.setProperty('visibility', 'visible');
             peerConnection = pc;

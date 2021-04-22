@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/pion/webrtc/v3"
 
@@ -31,10 +30,10 @@ type room struct {
 	game       game.Game
 	audioTrack *webrtc.TrackLocalStaticRTP
 	videoTrack *webrtc.TrackLocalStaticRTP
-	pool *sync.Pool
+	// playerTracks []*webrtc.TrackLocalStaticRTP
 
 	mu      *sync.Mutex
-	players []rtc.WebRTC
+	players map[game.PlayerIndex](rtc.WebRTC)
 }
 
 func NewRoom() (res Room, err error) {
@@ -45,30 +44,50 @@ func NewRoom() (res Room, err error) {
 		}
 	}()
 
-	pool := &sync.Pool{
-		New: func() interface{} {
-			return make([]byte, 1500) // UDP MTU
-		},
-	}
-
-	g, err := game.NewGame(game.TestGame, pool)
+	g, err := game.NewGame(game.TestGame)
 	utils.FailOnError(err, "Error creating game: ")
 
 	// Create a video track
-	videoTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8}, "video", "game-video")
+	videoTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "GameStream")
 	utils.FailOnError(err, "Error creating video track: ")
 
 	// Create an audio track
-	audioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus}, "audio", "game-audio")
+	audioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus}, "audio", "GameStream")
 	utils.FailOnError(err, "Error creating audio track: ")
 
 	r := &room{
 		game:       g,
 		audioTrack: audioTrack,
 		videoTrack: videoTrack,
-		pool: pool,
 		mu:         &sync.Mutex{},
-		players:    make([]rtc.WebRTC, 0),
+		players:    make(map[game.PlayerIndex](rtc.WebRTC)),
+	}
+
+	go func() {
+		select {
+		case ch := <-r.game.AudioStream():
+			go func() {
+				for pckt := range ch {
+					r.audioTrack.Write(pckt)
+				}
+			}()
+		}
+	}()
+
+	go func() {
+		select {
+		case ch := <-r.game.VideoStream():
+			go func() {
+				for pckt := range ch {
+					r.videoTrack.Write(pckt)
+				}
+			}()
+		}
+	}()
+
+	erra, errb := r.game.Start()
+	if erra != nil || errb != nil {
+		err = errors.New(fmt.Sprintf("Unable to start game -- video: %s -- audio: %s", erra, errb))
 	}
 
 	res = r
@@ -80,7 +99,18 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if len(r.players) > 3 {
+	var idx game.PlayerIndex
+	players := []game.PlayerIndex{game.Player1, game.Player2, game.Player3, game.Player4}
+
+	for _, p := range players {
+		_, prs := r.players[p]
+		if !prs {
+			idx = p
+			break
+		}
+	}
+
+	if idx == 0 {
 		return errors.New("Only 4 players at a time")
 	}
 
@@ -89,93 +119,36 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 		return err
 	}
 
-	r.players = append(r.players, rtc)
-
-	// CHANGE THIS: Use the first data channel (Echo) as input for game
+	// CHANGE THIS: Use the first data channel (GameInput) as input for game
 	dcs := rtc.DataChannels()
 	go func() {
-		defer r.removePlayer(rtc)
+		defer r.removePlayer(idx) // remove player if the rtc connection shuts down
 		for ch := range dcs {
-			r.game.AttachInputStream(ch)
+			r.game.AttachInputStream(ch, idx)
 		}
 	}()
-
-	select {
-	case <-rtc.Streaming():
-		// first player - start streaming
-		if len(r.players) == 1 {
-
-			go func() {
-				select {
-				case ch := <-r.game.AudioStream():
-					go func() {
-						for pckt := range ch {
-							r.audioTrack.Write(pckt)
-							r.pool.Put(pckt)
-						}
-					}()
-				}
-			}()
-
-			go func() {
-				select {
-				case ch := <-r.game.VideoStream():
-					go func() {
-						defer r.game.Close()
-						ticker := time.NewTicker(5 * time.Second)
-						defer ticker.Stop()
-						var counter int
-						var last_count int
-						for {
-							select {
-							case <-ticker.C:
-								fmt.Println(counter-last_count)
-								last_count = counter
-							case pckt, ok := <-ch:
-								if !ok {
-									return
-								}
-								r.videoTrack.Write(pckt)
-								counter += 1
-								r.pool.Put(pckt)
-							}
-						}
-						/**
-						for pckt := range ch {
-							r.videoTrack.Write(pckt)
-							r.pool.Put(pckt)
-						}
-						*/
-					}()
-				}
-			}()
-
-			erra, errb := r.game.Start()
-			if erra != nil || errb != nil {
-				rtc.Close()
-				return errors.New(fmt.Sprintf("Unable to start game -- video: %s -- audio: %s", erra, errb))
-			}
+	/**
+	tracks := rtc.Broadcast()
+	go func() {
+		for track := range tracks {
+			r.mu.Lock()
+			r.playerTracks.append(track)
+			r.mu.Unlock()
 		}
-	}
+	}()
+	*/
+	r.players[idx] = rtc
 
 	return nil
 }
 
-func (r *room) removePlayer(conn rtc.WebRTC) {
+func (r *room) removePlayer(idx game.PlayerIndex) {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	players := filter(r.players, func(player rtc.WebRTC) bool { return conn != player }) // remove this player
-	r.players = players
-}
-
-func filter(conns []rtc.WebRTC, fn func(rtc.WebRTC) bool) []rtc.WebRTC {
-	var peers []rtc.WebRTC // == nil
-	for _, v := range conns {
-		if fn(v) {
-			peers = append(peers, v)
-		}
+	_, prs := r.players[idx]
+	if prs {
+		delete(r.players, idx)
 	}
-	return peers
 }

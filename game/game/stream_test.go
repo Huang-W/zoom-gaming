@@ -5,26 +5,18 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	rtp "github.com/pion/rtp"
 )
-
-var pool *sync.Pool = &sync.Pool{
-	New: func() interface{} {
-		return new(rtp.Packet)
-	},
-}
 
 func TestTestVP8(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = context.WithValue(ctx, Port, 5004)
 
-	s, err := NewStream(ctx, TestVP8, pool)
+	s, err := NewStream(ctx, TestVP8)
 	if err != nil {
 		t.Errorf("error creating new stream")
 	}
 
-	var receivedPackets []*rtp.Packet = make([]*rtp.Packet, 0)
+	var receivedPackets [][]byte = make([][]byte, 0)
 	mu := &sync.Mutex{}
 	s.Start()
 
@@ -58,12 +50,12 @@ func TestTestOpus(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = context.WithValue(ctx, Port, 4004)
 
-	s, err := NewStream(ctx, TestOpus, pool)
+	s, err := NewStream(ctx, TestOpus)
 	if err != nil {
 		t.Errorf("error creating new stream")
 	}
 
-	var receivedPackets []*rtp.Packet = make([]*rtp.Packet, 0)
+	var receivedPackets [][]byte = make([][]byte, 0)
 	mu := &sync.Mutex{}
 	s.Start()
 

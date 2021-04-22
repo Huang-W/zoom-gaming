@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"os/exec"
-	"sync"
 
 	zutils "zoomgaming/utils"
 )
@@ -26,7 +25,7 @@ No close method; the caller's context will end the stream.
 
 type Stream interface {
 	Updates() chan (<-chan []byte) // only one channel of rtp packets is expected
-	Start() error                       // starts a command and returns an error if already started
+	Start() error                  // starts a command and returns an error if already started
 }
 
 type stream struct {
@@ -35,10 +34,9 @@ type stream struct {
 	cmd      *exec.Cmd
 	updates  chan (<-chan []byte)
 	ctx      context.Context
-	pool *sync.Pool
 }
 
-func NewStream(ctx context.Context, typ mediaStreamType, pool *sync.Pool) (s Stream, err error) {
+func NewStream(ctx context.Context, typ mediaStreamType) (s Stream, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -56,25 +54,25 @@ func NewStream(ctx context.Context, typ mediaStreamType, pool *sync.Pool) (s Str
 	}
 
 	switch typ {
+	case VideoSH:
+		cmd = exec.CommandContext(ctx, "bash", "./video.sh")
+		break
+	case AudioSH:
+		cmd = exec.CommandContext(ctx, "bash", "./audio.sh")
+		break
 	case TestVP8:
-		// cmd = exec.CommandContext(ctx, "bash", "./video.sh")
-		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "x11grab", "-s", "1280x720", "-i", ":0+320,180", "-filter:v", "crop=1280:720:0:0",
-			"-c:v", "libvpx", "-quality", "realtime", "-cpu-used", "5", "-b:v", "384k", "-qmin", "10", "-qmax", "42", "-maxrate", "384k", "-bufsize", "1000k", "-an", "-f", "rtp",
-			fmt.Sprintf("rtp://127.0.0.1:%d", port))
-		/**
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
 			"-vcodec", "libvpx", "-cpu-used", "5", "-deadline", "1", "-g", "10", "-error-resilient", "1", "-auto-alt-ref", "1", "-f", "rtp",
 			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
-		*/
 		break
 	case TestOpus:
-		/**
-		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "pulse", "-re", "-i", "default", "-c:a", "libopus", "-ar", "8000", "-f", "mulaw", "-f", "rtp",
-		fmt.Sprintf("rtp://127.0.0.1:%d", port))
-		*/
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "lavfi", "-i", "sine=frequency=1000",
 			"-c:a", "libopus", "-b:a", "8000", "-sample_fmt", "s16p", "-ssrc", "1", "-payload_type", "111", "-f", "rtp", "-max_delay", "0", "-application", "lowdelay",
-			fmt.Sprintf("rtp:/127.0.0.1:%d?pkt_size=1200", port))
+			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
+		break
+	case PulseOpus:
+		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "pulse", "-re", "-i", "default", "-c:a", "libopus", "-ar", "8000", "-f", "mulaw", "-f", "rtp",
+			fmt.Sprintf("rtp://127.0.0.1:%d", port))
 		break
 	default:
 		panic(fmt.Sprintf("Invalid MediaStreamType: %s", typ))
@@ -88,7 +86,6 @@ func NewStream(ctx context.Context, typ mediaStreamType, pool *sync.Pool) (s Str
 		cmd:      cmd,
 		updates:  make(chan (<-chan []byte)),
 		ctx:      ctx,
-		pool: pool,
 	}
 
 	return
@@ -102,7 +99,7 @@ func (s *stream) Start() error {
 
 	go s.readPackets()
 
-	/**
+	/** DEBUG
 	stdout, err := s.cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -115,7 +112,7 @@ func (s *stream) Start() error {
 	if err := s.cmd.Start(); err != nil {
 		return err
 	}
-	/**
+	/** DEBUG
 	go func() {
 		buf := bufio.NewReader(stdout) // Notice that this is not in a loop
 		for {
@@ -164,10 +161,11 @@ func (s *stream) readPackets() {
 
 	// Read RTP packets forever and send them to the browser(s)
 	for {
-		// inboundRTPPacket := s.pool.Get().([]byte)
 		inboundRTPPacket := make([]byte, 1600) // UDP MTU
 		n, _, err := s.listener.ReadFrom(inboundRTPPacket)
+
 		receiver <- inboundRTPPacket[:n]
+
 		if err != nil {
 			log.Printf("UDP Connection closed - exiting: %s", err)
 			return
