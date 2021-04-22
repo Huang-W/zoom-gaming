@@ -60,19 +60,15 @@ func NewStream(ctx context.Context, typ mediaStreamType) (s Stream, err error) {
 	case AudioSH:
 		cmd = exec.CommandContext(ctx, "bash", "./audio.sh")
 		break
-	case TestVP8:
+	case TestH264:
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
-			"-vcodec", "libvpx", "-cpu-used", "5", "-deadline", "1", "-g", "10", "-error-resilient", "1", "-auto-alt-ref", "1", "-f", "rtp",
+			"-vcodec", "libx264", "-cpu-used", "5", "-deadline", "1", "-g", "10", "-error-resilient", "1", "-auto-alt-ref", "1", "-f", "rtp",
 			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
 		break
 	case TestOpus:
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "lavfi", "-i", "sine=frequency=1000",
 			"-c:a", "libopus", "-b:a", "8000", "-sample_fmt", "s16p", "-ssrc", "1", "-payload_type", "111", "-f", "rtp", "-max_delay", "0", "-application", "lowdelay",
 			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
-		break
-	case PulseOpus:
-		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "pulse", "-re", "-i", "default", "-c:a", "libopus", "-ar", "8000", "-f", "mulaw", "-f", "rtp",
-			fmt.Sprintf("rtp://127.0.0.1:%d", port))
 		break
 	default:
 		panic(fmt.Sprintf("Invalid MediaStreamType: %s", typ))

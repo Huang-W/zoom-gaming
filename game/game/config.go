@@ -18,16 +18,14 @@ func (typ GameType) String() string {
 type mediaStreamType int
 
 const (
-	TestVP8 mediaStreamType = iota + 1
+	TestH264 mediaStreamType = iota + 1
 	TestOpus
-	X11VP8
-	PulseOpus
 	VideoSH
 	AudioSH
 )
 
 func (typ mediaStreamType) String() string {
-	return [...]string{"", "TestVP8", "TestOpus", "X11VP8", "PulseOpus", "VideoSH", "AudioSH"}[typ]
+	return [...]string{"", "TestVP8", "TestOpus", "VideoSH", "AudioSH"}[typ]
 }
 
 type key int

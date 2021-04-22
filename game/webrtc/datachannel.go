@@ -37,7 +37,7 @@ func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataCha
 	dc_impl.OnMessage(func(msg webrtc.DataChannelMessage) {
 
 		b := msg.Data
-		log.Printf("Message received on DataChannel '%s'", dc_impl.Label())
+		// log.Printf("Message received on DataChannel '%s'", dc_impl.Label())
 
 		var pb_msg pref.Message = mapping[label].New()
 		err := proto.Unmarshal(b, pb_msg.Interface())

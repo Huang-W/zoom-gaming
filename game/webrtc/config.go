@@ -16,13 +16,12 @@ const (
 type DataChannelLabel int // Represents a unique data chhanel
 
 const (
-	Echo DataChannelLabel = iota + 1
-	GameInput
+	GameInput DataChannelLabel = iota + 1
 	// ChatRoom
 )
 
 func (label DataChannelLabel) String() string {
-	return [...]string{"", "Echo", "GameInput", "ChatRoom"}[label]
+	return [...]string{"", "GameInput", "ChatRoom"}[label]
 }
 
 var defaultRTCConfiguration = webrtc.Configuration{
@@ -39,19 +38,12 @@ var dcConfigs = map[DataChannelLabel](*webrtc.DataChannelInit){
 		Negotiated: func(b bool) *bool { return &b }(true),
 		ID:         func(i uint16) *uint16 { return &i }(0),
 	},
-	Echo: &webrtc.DataChannelInit{
-		Ordered:    func(b bool) *bool { return &b }(true),
-		Negotiated: func(b bool) *bool { return &b }(true),
-		ID:         func(i uint16) *uint16 { return &i }(1),
-	},
 }
 
 var mapping = map[DataChannelLabel](pref.MessageType){
-	Echo:      (*pb.Echo)(nil).ProtoReflect().Type(),
 	GameInput: (*pb.InputEvent)(nil).ProtoReflect().Type(),
 }
 
 var reverseMapping = map[pref.MessageType](DataChannelLabel){
-	(*pb.Echo)(nil).ProtoReflect().Type():       Echo,
 	(*pb.InputEvent)(nil).ProtoReflect().Type(): GameInput,
 }

@@ -1,6 +1,7 @@
 package webrtc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,7 +11,8 @@ import (
 	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v3"
 
-	proto "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	pb "zoomgaming/proto"
 	zutils "zoomgaming/utils"
@@ -137,7 +139,9 @@ func (w *webRTC) watchWebSocket() {
 		}
 		log.Println("ws closing...")
 		close(w.updates)
-		w.conn.Close()
+		if w.conn != nil {
+			w.conn.Close()
+		}
 	}()
 
 	wsOpen := w.ws.Updates()
@@ -153,37 +157,13 @@ func (w *webRTC) watchWebSocket() {
 
 				log.Println("message on ws: ")
 
-				var msg pb.SignalingEvent
+				var msg pb.SessionDescription
 				if err := proto.Unmarshal(b, msg.ProtoReflect().Interface()); err != nil {
 					log.Printf("Error unmarshaling message: %v", b)
 					continue
-				}
-
-				evt := msg.GetEvent()
-
-				switch t := evt.(type) {
-
-				case *pb.SignalingEvent_RtcIceServer:
-
-					continue // no longer used
-
-				case *pb.SignalingEvent_SessionDescription:
-
+				} else {
 					err := w.handleSessionDescription(&msg)
 					zutils.WarnOnError(err, "Error handling client offer: %s")
-
-				case *pb.SignalingEvent_RtcIceCandidateInit:
-
-					continue // no longer used
-
-				case nil:
-
-					log.Println("Signaling event message with empty Event field")
-
-				default:
-
-					log.Printf("SignalingEvent.Event has unexpected type %T", t)
-
 				}
 			}
 			log.Println("closed?")
@@ -195,14 +175,13 @@ func (w *webRTC) watchWebSocket() {
 // Received an offer from the browser client
 //
 // FIRST
-func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
+func (w *webRTC) handleSessionDescription(msg *pb.SessionDescription) error {
 
-	sdp_pb := msg.GetSessionDescription()
-	if sdp_pb.GetType() != pb.SessionDescription_SDP_TYPE_OFFER {
+	if msg.GetType() != pb.SessionDescription_SDP_TYPE_OFFER {
 		return errors.New("expected an offer")
 	}
-	offerStr := sdp_pb.GetSdp()
-	log.Println(offerStr)
+	offerStr := msg.GetSdp()
+	// log.Println(offerStr)
 
 	// Create a MediaEngine object to configure the supported codec
 	m := &webrtc.MediaEngine{}
@@ -351,15 +330,32 @@ func (w *webRTC) handleSessionDescription(msg *pb.SignalingEvent) error {
 	w.conn.SetLocalDescription(answer)
 
 	w.conn.OnICECandidate(func(c *webrtc.ICECandidate) {
-		log.Println("OnIceCandidate:", c)
+		// log.Println("OnIceCandidate:", c)
 		if c == nil {
 
 			local_sdp := w.conn.LocalDescription()
 
-			log.Println(local_sdp)
+			// log.Println(local_sdp)
 
-			b_arr, err := zutils.MarshalSignalingEvent(local_sdp)
-			zutils.WarnOnError(err, "Error converting local description: %s")
+			sdp := pb.SessionDescription{}
+
+			// pion/webrtc struct in json format
+			temp_b, err := json.Marshal(local_sdp)
+			if err != nil {
+				log.Printf("%s", err)
+				return
+			}
+
+			if err := protojson.Unmarshal(temp_b, sdp.ProtoReflect().Interface()); err != nil {
+				log.Printf("%s", err)
+				return
+			}
+
+			b_arr, err := proto.Marshal(sdp.ProtoReflect().Interface())
+			if err != nil {
+				log.Printf("%s", err)
+				return
+			}
 
 			err = w.ws.Send(b_arr)
 			zutils.WarnOnError(err, "Error sending sdp to browser client: %s")

@@ -1,11 +1,10 @@
 const pb = require('./proto/signaling_pb');
-const echo = require('./proto/echo_pb');
 const input = require('./proto/input_pb');
 import adapter from "node_modules/webrtc-adapter";
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
 
-const SERVER_ADDR = "35.232.40.2";
+const SERVER_ADDR = "127.0.0.1";
 
 (function() {
   let input_dc = null;
@@ -40,9 +39,7 @@ const SERVER_ADDR = "35.232.40.2";
     let pb_sd = new pb.SessionDescription();
     pb_sd.setType(pb.SessionDescription.SDPType.SDP_TYPE_OFFER);
     pb_sd.setSdp(offer);
-    let signaling_event = new pb.SignalingEvent();
-    signaling_event.setSessionDescription(pb_sd);
-    let uint8_array = signaling_event.serializeBinary();
+    let uint8_array = pb_sd.serializeBinary();
     webSocket.send(uint8_array.buffer);
   }
 
@@ -98,6 +95,7 @@ const SERVER_ADDR = "35.232.40.2";
 
       document.addEventListener('keydown', (event) => {
         if (!event.repeat && InputMap.has(event.code)) {
+          // console.log(event.code);
           let input_msg = new input.InputEvent();
           let key_press_event = new input.KeyPressEvent();
           key_press_event.setDirection(input.KeyPressEvent.Direction.DIRECTION_DOWN);
@@ -105,11 +103,11 @@ const SERVER_ADDR = "35.232.40.2";
           input_msg.setKeyPressEvent(key_press_event);
           input_dc.send(input_msg.serializeBinary().buffer);
         }
-        console.log(event.code);
       });
 
       document.addEventListener('keyup', (event) => {
         if (InputMap.has(event.code)) {
+          // console.log(event.code);
           let input_msg = new input.InputEvent();
           let key_press_event = new input.KeyPressEvent();
           key_press_event.setDirection(input.KeyPressEvent.Direction.DIRECTION_UP);
@@ -117,7 +115,6 @@ const SERVER_ADDR = "35.232.40.2";
           input_msg.setKeyPressEvent(key_press_event);
           input_dc.send(input_msg.serializeBinary().buffer);
         }
-        console.log(event.code);
       });
 
       stream && stream.getTracks().forEach(track => {
@@ -210,19 +207,12 @@ const SERVER_ADDR = "35.232.40.2";
 
   let handleWebsocketEvent = (event) => {
     if ( Object.getPrototypeOf(event) === MessageEvent.prototype ) {
-      let signaling_event = new pb.SignalingEvent.deserializeBinary(event.data);
-      switch (signaling_event.getEventCase()) {
-        case pb.SignalingEvent.EventCase.SESSION_DESCRIPTION:
-          console.log("sdp!");
-          let pb_sdp = signaling_event.getSessionDescription();
-          handleAnswer(pb_sdp);
-          break;
-        case pb.SignalingEvent.EventCase.EVENT_NOT_SET:
-          console.log("SignalingEvent's event field is empty");
-          break;
-        default:
-          console.log("Unable to deserialize into pb.SignalingEvent");
-          break;
+      let remote_sdp_answer = new pb.SessionDescription.deserializeBinary(event.data);
+      if (remote_sdp_answer) {
+        console.log("sdp!");
+        handleAnswer(remote_sdp_answer);
+      } else {
+        console.error("not an sdp");
       }
     } else if ( Object.getPrototypeOf(event) === CloseEvent.prototype ) {
       console.log("ws closing");

@@ -32,6 +32,7 @@ type Game interface {
 
 type game struct {
 	ctx             context.Context
+	typ GameType
 	audioStream     Stream
 	videoStream     Stream
 	virtualKeyboard uinput.Keyboard
@@ -40,7 +41,6 @@ type game struct {
 	cancel context.CancelFunc
 
 	mu             *sync.Mutex
-	playerInput    chan int
 	occupancy      map[PlayerIndex](bool)
 	player1Mapping map[pb.KeyPressEvent_Key](int)
 	player2Mapping map[pb.KeyPressEvent_Key](int)
@@ -65,6 +65,13 @@ func NewGame(typ GameType) (g Game, err error) {
 
 	switch typ {
 	case TestGame:
+		vctx := context.WithValue(ctx, Port, 5004)
+		actx := context.WithValue(ctx, Port, 4004)
+		videoStream, err = NewStream(vctx, TestH264)
+		zutils.FailOnError(err, "Error starting video stream: %s")
+		audioStream, err = NewStream(actx, TestOpus)
+		zutils.FailOnError(err, "Error starting audio stream: %s")
+	case SpaceTime:
 		vctx := context.WithValue(ctx, Port, 5004)
 		actx := context.WithValue(ctx, Port, 4004)
 		videoStream, err = NewStream(vctx, VideoSH)
@@ -132,6 +139,7 @@ func NewGame(typ GameType) (g Game, err error) {
 	}
 
 	game := &game{
+		typ: typ,
 		ctx:             ctx,
 		audioStream:     audioStream,
 		videoStream:     videoStream,
@@ -139,7 +147,6 @@ func NewGame(typ GameType) (g Game, err error) {
 		wg:              &sync.WaitGroup{},
 		cancel:          cancel,
 		mu:              &sync.Mutex{},
-		playerInput:     make(chan int, 1024),
 		occupancy:       occupancy,
 		player1Mapping:  p1mapping,
 		player2Mapping:  p2mapping,
@@ -147,7 +154,7 @@ func NewGame(typ GameType) (g Game, err error) {
 		player4Mapping:  p4mapping,
 	}
 
-	go game.feedInput()
+	go game.awaitCancel()
 
 	g = game
 	return
@@ -189,35 +196,45 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 		return errors.New("player  not found")
 	}
 
-	go func() {
+	if g.typ == TestGame {
+		go func() {
 
-		g.wg.Add(1)
-		defer g.wg.Done()
+			g.wg.Add(1)
+			defer g.wg.Done()
 
-		for msg := range ch {
-			// log.Println(msg)
-			switch t := msg.(type) {
-			case *pb.InputEvent:
-				evt := msg.(*pb.InputEvent).GetKeyPressEvent()
-				key, prs := mapping[evt.GetKey()]
-				if !prs {
-					continue
-				}
-				switch evt.GetDirection() {
-				case pb.KeyPressEvent_DIRECTION_UP:
-					g.playerInput <- (key + 1000)
-				case pb.KeyPressEvent_DIRECTION_DOWN:
-					g.playerInput <- key
-				default:
-					log.Printf("No direction specified")
-					continue
-				}
-			default:
-				log.Printf("Unexcepted type: %T", t)
-				continue
+			for msg := range ch {
+				msg := msg.(*pb.InputEvent)
+				log.Printf("Received msg from player %s: %s", idx, msg)
 			}
-		}
-	}()
+		}()
+	} else {
+		go func() {
+
+			g.wg.Add(1)
+			defer g.wg.Done()
+
+			for msg := range ch {
+				// log.Println(msg)
+				switch t := msg.(type) {
+				case *pb.InputEvent:
+					evt := msg.(*pb.InputEvent).GetKeyPressEvent()
+					key := mapping[evt.GetKey()]
+					switch evt.GetDirection() {
+					case pb.KeyPressEvent_DIRECTION_UP:
+						g.virtualKeyboard.KeyUp(key)
+					case pb.KeyPressEvent_DIRECTION_DOWN:
+						g.virtualKeyboard.KeyDown(key)
+					default:
+						log.Printf("No direction specified")
+						continue
+					}
+				default:
+					log.Printf("Unexcepted type: %T", t)
+					continue
+				}
+			}
+		}()
+	}
 
 	return nil
 }
@@ -233,27 +250,15 @@ func (g *game) Close() {
 	g.cancel()
 }
 
-func (g *game) feedInput() {
+func (g *game) awaitCancel() {
 
 	defer func() {
 		g.wg.Wait()
-		close(g.playerInput)
 		g.virtualKeyboard.Close()
 	}()
 
-	for {
-		select {
-		case <-g.ctx.Done():
-			return
-		case key, ok := <-g.playerInput:
-			if !ok {
-				return
-			}
-			if key < 1000 {
-				g.virtualKeyboard.KeyDown(key)
-			} else {
-				g.virtualKeyboard.KeyUp(key-1000)
-			}
-		}
+	select {
+	case <-g.ctx.Done():
+		return
 	}
 }
