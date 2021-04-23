@@ -18,7 +18,7 @@ import (
 A room is associated with 1 game at a time
 Up to 4 players in a room
 
- // At some point, the players should have some identifying information beyond just an RTCPeerConnection
+// At some point, the players should have some identifying information beyond just an RTCPeerConnection
 
 */
 

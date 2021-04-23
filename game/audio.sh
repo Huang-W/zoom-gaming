@@ -1,1 +1,1 @@
-ffmpeg -thread_queue_size 512 -ar 8000 -f pulse -i default -c:a libopus -f rtp rtp://127.0.0.1:4004
+gst-launch-1.0 pulsesrc provide-clock=True do-timestamp=True ! opusenc bitrate=64000 ! rtpopuspay ! queue leaky=1 max-size-time=16000000 max-size-buffers=0 max-size-bytes=0 ! udpsink host=127.0.0.1 port=$1

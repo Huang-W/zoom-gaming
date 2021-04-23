@@ -4,6 +4,7 @@ import adapter from "node_modules/webrtc-adapter";
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
 
+// const SERVER_ADDR = "34.94.73.231";
 const SERVER_ADDR = "127.0.0.1";
 
 (function() {
@@ -57,7 +58,7 @@ const SERVER_ADDR = "127.0.0.1";
     });
   }
 
-  let startRemoteSession = (remoteVideoNode, remoteAudioNode, stream) => {
+  let startRemoteSession = (remoteVideoNode, playerVideoNodes, stream) => {
     let pc;
 
     return Promise.resolve().then(() => {
@@ -66,21 +67,20 @@ const SERVER_ADDR = "127.0.0.1";
       });
 
       // game streaming
-      pc.addTransceiver('audio', {'direction': 'recvonly'})
-      pc.addTransceiver('video', {'direction': 'recvonly'})
+      pc.addTransceiver('audio', {'direction': 'recvonly'});
+      pc.addTransceiver('video', {'direction': 'recvonly'});
 
       // camera + mic
-      // pc.addTransceiver('audio', {'direction': 'sendonly'})
-      // pc.addTransceiver('video', {'direction': 'sendonly'})
+      // pc.addTransceiver('audio', {'direction': 'sendonly'});
+      // pc.addTransceiver('video', {'direction': 'sendonly'});
 
-      pc.ontrack = (event) => {
+      pc.ontrack = ({ track, streams }) => {
         console.info('ontrack triggered');
-        console.log(event);
-        if (event.track.kind == "video") {
-          remoteVideoNode.srcObject = event.streams[0]
-        }
-        if (event.track.kind == "audio") {
-          remoteAudioNode.srcObject = event.streams[0]
+        console.log(track);
+        console.log(streams);
+        if (!remoteVideoNode.srcObject) {
+          remoteVideoNode.srcObject = streams[0];
+          remoteVideoNode.play();
         }
       };
 
@@ -118,7 +118,7 @@ const SERVER_ADDR = "127.0.0.1";
       });
 
       stream && stream.getTracks().forEach(track => {
-        // pc.addTrack(track, stream);
+        pc.addTrack(track, stream);
       });
       return createOffer(pc);
     }).then(offer => {
@@ -129,9 +129,8 @@ const SERVER_ADDR = "127.0.0.1";
 
   document.addEventListener('DOMContentLoaded', () => {
     let selectedScreen = 0;
-    const localVideo = document.querySelector('#local-video');
+    const playerVideos = document.querySelector('#player-videos');
     const remoteVideo = document.querySelector('#remote-video');
-    const remoteAudio = document.querySelector('#remote-audio');
     const screenSelect = document.querySelector('#screen-select');
     const startStop = document.querySelector('#start-stop');
 
@@ -161,14 +160,19 @@ const SERVER_ADDR = "127.0.0.1";
       enableStartStop(false);
 
       const videoConstraints = {
-          height: { ideal: 300, max: 720 },
-          width: { ideal: 400, max: 1280 }
+          height: { ideal: 240, max: 300 },
+          width: { ideal: 320, max: 400 }
       };
-      const userMediaPromise = Promise.resolve(null); // navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
+      const userMediaPromise = Promise.resolve(null);
+      // const userMediaPromise = navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true }) || Promise.resolve(null);
       if (!peerConnection) {
         userMediaPromise.then(stream => {
-          localVideo.srcObject = stream;
-          return startRemoteSession(remoteVideo, remoteAudio, stream).then(pc => {
+          let el = document.createElement("video");
+          el.srcObject = stream;
+          el.muted = true;
+          el.autoplay = true;
+          playerVideos.appendChild(el);
+          return startRemoteSession(remoteVideo, playerVideos, stream).then(pc => {
             remoteVideo.style.setProperty('visibility', 'visible');
             peerConnection = pc;
           }).catch(showError).then(() => {

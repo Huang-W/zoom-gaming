@@ -1,6 +1,6 @@
 ### Installing packages
 
-- `sudo apt-get install build-essential unzip xserver-xorg-core x11-utils kubuntu-desktop pkg-config libglvnd-dev yasm cmake libtool libc6 libc6-dev wget libnuma1 libnuma-dev libpulse-dev libopus-dev docker.io`
+- `sudo apt-get install build-essential unzip xserver-xorg-core x11-utils kubuntu-desktop pkg-config libglvnd-dev yasm cmake libtool libc6 libc6-dev wget libnuma1 libnuma-dev libpulse-dev libopus-dev gstreamer1.0-tools docker.io`
 
 ### User permission for uinput
 
@@ -20,3 +20,7 @@
 ### Configuration X server
 
 - `sudo nvidia-xconfig --mode-list=1280x720 --separate-x-screens`
+
+### Keyboard Mappings for demo game
+
+- [PCGamingWiki - Lovers in a Dangerous Spacetime](https://www.pcgamingwiki.com/wiki/Lovers_in_a_Dangerous_Spacetime)

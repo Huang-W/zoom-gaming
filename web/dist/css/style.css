@@ -14,7 +14,8 @@ html, body {
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
   background-color: #303030;
 }
@@ -68,6 +69,15 @@ select:invalid {
   align-self: center;
   padding-left: 20px;
   font-size: 2.5rem;
+}
+
+#player-videos {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 240px;
+  justify-content: center;
 }
 
 #remote-video {

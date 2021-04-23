@@ -55,10 +55,10 @@ func NewStream(ctx context.Context, typ mediaStreamType) (s Stream, err error) {
 
 	switch typ {
 	case VideoSH:
-		cmd = exec.CommandContext(ctx, "bash", "./video.sh")
+		cmd = exec.CommandContext(ctx, "bash", "./video.sh", ":99.0", fmt.Sprintf("%d", port))
 		break
 	case AudioSH:
-		cmd = exec.CommandContext(ctx, "bash", "./audio.sh")
+		cmd = exec.CommandContext(ctx, "bash", "./audio.sh", fmt.Sprintf("%d", port))
 		break
 	case TestH264:
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
