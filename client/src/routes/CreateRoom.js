@@ -1,14 +1,15 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { v1 as uuid } from "uuid";
 
 const CreateRoom = (props) => {
-    function create() {
+
+    useEffect(() => {
         const id = uuid();
         props.history.push(`/${id}`);
-    }
+    })
 
     return (
-        <button onClick={create}>Create room</button>
+        <></>
     );
 };
 

@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 import { Redirect } from 'react-router-dom'
 import { connect } from 'react-redux'
 import randomize from 'randomatic'
-import { ButtonTabooCard } from './../shared/TabooCard'
-import CreateGameForm from './../CreateGameForm'
-import Pending from './../shared/Pending'
-import {ErrorMessage} from './../shared/FeedbackMessage'
-import { createNewGame } from './../../store/actions/gameActions'
-import { clearErrors } from './../../store/actions/errorActions'
+import { ButtonTabooCard } from '../shared/TabooCard'
+import CreateGameForm from '../CreateGameForm'
+import Pending from '../shared/Pending'
+import {ErrorMessage} from '../shared/FeedbackMessage'
+import { createNewGame } from '../../store/actions/gameActions'
+import { clearErrors } from '../../store/actions/errorActions'
 
 export class CreateGame extends React.Component {
 	constructor(props) {

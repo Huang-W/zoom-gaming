@@ -9,12 +9,12 @@ import { Provider } from 'react-redux'
 import { reduxFirestore, getFirestore, createFirestoreInstance } from 'redux-firestore'
 import { ReactReduxFirebaseProvider, getFirebase } from 'react-redux-firebase'
 import firebase from 'firebase/app'
-import fbConfig from './utils/fbConfig'
-import rootReducer from './store/reducers/rootReducer'
+import fbConfig from './taboo/utils/fbConfig'
+import rootReducer from './taboo/store/reducers/rootReducer'
 import { ThemeProvider } from 'styled-components'
 import App from './App'
-import GlobalStyle from './global-design/globalStyles'
-import theme from './global-design/theme'
+import GlobalStyle from './taboo/global-design/globalStyles'
+import theme from './taboo/global-design/theme'
 
 const store = createStore(
   rootReducer,
@@ -36,7 +36,7 @@ ReactDOM.render(
     <Provider store={store}>
       <ReactReduxFirebaseProvider {...rrfProps}>
         <ThemeProvider theme={theme}>
-          <GlobalStyle />
+          {/*<GlobalStyle />*/}
           <App />
         </ThemeProvider>
       </ReactReduxFirebaseProvider>

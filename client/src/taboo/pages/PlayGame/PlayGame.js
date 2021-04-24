@@ -9,7 +9,7 @@ import { fetchGameDeck } from '../../store/actions/gameActions'
 import Round from '../../components/Round'
 import LoadingCard from '../../components/shared/LoadingCard'
 import { ButtonErrorCard, ErrorCard } from '../../components/shared/ErrorCard'
-import Room from "../../routes/Room";
+import Room from "../../../routes/Room";
 import {gameReducer} from "../../store/reducers/gameReducer";
 
 export class PlayGame extends React.Component {

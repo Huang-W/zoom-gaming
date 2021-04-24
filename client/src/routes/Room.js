@@ -2,19 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
+import {useParams} from "react-router";
+import {Grid} from "@material-ui/core";
+import GameLovers from "./GameLovers/GameLovers";
 
 const Container = styled.div`
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    width: 100vw;
-    margin-left: -37vw;
-    flex-wrap: wrap;
-`;
-
-const StyledVideo = styled.video`
-    width: 20%;
-    height: 170px;
+    // padding: 10px;
+    // display: flex;
+    // justify-content: center;
+    // width: 20%;
+    // flex-wrap: wrap;
 `;
 
 const Video = (props) => {
@@ -33,16 +30,22 @@ const Video = (props) => {
 
 
 const videoConstraints = {
-    height: window.innerHeight / 2,
-    width: window.innerWidth / 2
+    "width": 640,
+    "height": 480
 };
+
+const StyledVideo = styled.video`
+    width: 100%;
+    height: 480;
+`;
 
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
-    const roomID = props.gamecode;
+    const { id } = useParams();
+    const roomID = id;
 
     useEffect(() => {
         socketRef.current = io.connect("/");
@@ -110,14 +113,19 @@ const Room = (props) => {
     }
 
     return (
-        <Container>
-            <StyledVideo muted ref={userVideo} autoPlay playsInline />
-            {peers.map((peer, index) => {
-                return (
-                  <Video key={index} peer={peer} />
-                );
-            })}
-        </Container>
+        <Grid container>
+            <Grid item xs={10}>
+                <GameLovers />
+            </Grid>
+            <Grid item xs={2} container direction={"column"}>
+                <StyledVideo muted ref={userVideo} autoPlay playsInline />
+                {peers.map((peer, index) => {
+                    return (
+                      <Video key={index} peer={peer} />
+                    );
+                })}
+            </Grid>
+        </Grid>
     );
 };
 
