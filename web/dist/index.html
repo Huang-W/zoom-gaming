@@ -6,22 +6,12 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" href="./css/style.css">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
-  <title>WebRTC remote viewer</title>
+  <title>Game On</title>
 </head>
 <body>
+  <div id="error"></div>
   <div id="app">
-    <div id="controls">
-      <div id="error"></div>
-      <select id="screen-select">
-      </select>
-      <button id="start-stop">Start</button>
-    </div>
-    <div id="instructions">Select a screen and press Start</div>
-    <div id="player-videos">
-
-    </div></br>
-    <video id="remote-video" playsinline></video>
-    <audio id="remote-audio" autoplay></audio>
+    <video id="remote-video" autoplay muted playsinline></video>
   </div>
   <script src="./main.js"></script>
 </body>
