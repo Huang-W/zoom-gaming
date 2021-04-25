@@ -5,11 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"os/user"
 	"sync"
 
-	proto "google.golang.org/protobuf/proto"
+	x "github.com/linuxdeepin/go-x11-client"
+	"github.com/linuxdeepin/go-x11-client/ext/test"
+	"github.com/linuxdeepin/go-x11-client/util/keysyms"
 
-	uinput "gopkg.in/bendahl/uinput.v1"
+	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
 	zutils "zoomgaming/utils"
@@ -31,28 +36,34 @@ type Game interface {
 }
 
 type game struct {
-	ctx             context.Context
-	typ GameType
-	audioStream     Stream
-	videoStream     Stream
-	virtualKeyboard uinput.Keyboard
+	ctx         context.Context
+	typ         GameType
+	gameExec    *exec.Cmd
+	audioStream Stream
+	videoStream Stream
+	xdisplay *x.Conn
 
 	wg     *sync.WaitGroup // protects merged player input channels
 	cancel context.CancelFunc
 
 	mu             *sync.Mutex
 	occupancy      map[PlayerIndex](bool)
-	player1Mapping map[pb.KeyPressEvent_Key](int)
-	player2Mapping map[pb.KeyPressEvent_Key](int)
-	player3Mapping map[pb.KeyPressEvent_Key](int)
-	player4Mapping map[pb.KeyPressEvent_Key](int)
+	player1Mapping map[pb.KeyPressEvent_Key](x.Keycode)
+	player2Mapping map[pb.KeyPressEvent_Key](x.Keycode)
+	player3Mapping map[pb.KeyPressEvent_Key](x.Keycode)
+	player4Mapping map[pb.KeyPressEvent_Key](x.Keycode)
 }
 
 // This must be called
-func NewGame(typ GameType) (g Game, err error) {
+func NewGame(typ GameType, roomIndex int) (g Game, err error) {
+
+	var xdisplay *x.Conn
 
 	defer func() {
 		if r := recover(); r != nil {
+			if xdisplay != nil {
+				xdisplay.Close()
+			}
 			err = errors.New(fmt.Sprintf("%s", r))
 			return
 		}
@@ -60,31 +71,43 @@ func NewGame(typ GameType) (g Game, err error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	var gameExec *exec.Cmd
 	var audioStream Stream
 	var videoStream Stream
 
+	vctx := context.WithValue(ctx, Port, 5004)
+	actx := context.WithValue(ctx, Port, 4004)
+
+	curr_user, err := user.Current()
+	if err != nil {
+		panic("Error looking up current user")
+	}
+
 	switch typ {
 	case TestGame:
-		vctx := context.WithValue(ctx, Port, 5004)
-		actx := context.WithValue(ctx, Port, 4004)
-		videoStream, err = NewStream(vctx, TestH264)
+		gameExec = &exec.Cmd{Path: ""}
+		videoStream, err = NewStream(vctx, TestH264, roomIndex)
 		zutils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = NewStream(actx, TestOpus)
+		audioStream, err = NewStream(actx, TestOpus, roomIndex)
 		zutils.FailOnError(err, "Error starting audio stream: %s")
 	case SpaceTime:
-		vctx := context.WithValue(ctx, Port, 5004)
-		actx := context.WithValue(ctx, Port, 4004)
-		videoStream, err = NewStream(vctx, VideoSH)
+		gameExec = exec.CommandContext(ctx, fmt.Sprintf("%s/games/SpaceTime/start.sh", curr_user.HomeDir))
+		videoStream, err = NewStream(vctx, VideoSH, roomIndex)
 		zutils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = NewStream(actx, AudioSH)
+		audioStream, err = NewStream(actx, AudioSH, roomIndex)
 		zutils.FailOnError(err, "Error starting audio stream: %s")
 	default:
 		panic("Invalid game type")
 	}
 
-	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("virtualkeyboard"))
+	gameExec.Env = append(os.Environ(), fmt.Sprintf("DISPLAY=:%d", 99-roomIndex))
+	xdisplay, err = x.NewConnDisplay(fmt.Sprintf(":%d", 99-roomIndex))
 	if err != nil {
-		panic("Unable to create virtual keyboard")
+		// try connecting to :0 instead
+		xdisplay, err = x.NewConnDisplay(":0")
+		if err != nil {
+			panic(fmt.Sprintf("Unable to connect to display %d and :0", 99-roomIndex))
+		}
 	}
 
 	var occupancy = map[PlayerIndex](bool){
@@ -94,64 +117,74 @@ func NewGame(typ GameType) (g Game, err error) {
 		Player4: false,
 	}
 
-	var p1mapping = map[pb.KeyPressEvent_Key](int){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  uinput.KeyLeft,
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: uinput.KeyRight,
-		pb.KeyPressEvent_KEY_ARROW_UP:    uinput.KeyUp,
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  uinput.KeyDown,
-		pb.KeyPressEvent_KEY_SPACE:       uinput.KeySpace,
-		pb.KeyPressEvent_KEY_KEY_D:       uinput.KeyD,
-		pb.KeyPressEvent_KEY_KEY_S:       uinput.KeyS,
-		pb.KeyPressEvent_KEY_KEY_A:       uinput.KeyA,
+	symbols := keysyms.NewKeySymbols(xdisplay)
+
+	var p1mapping = map[pb.KeyPressEvent_Key](x.Keycode){
+		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Left)[0],
+		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_Right)[0],
+		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_Up)[0],
+		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_Down)[0],
+		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_space)[0],
+		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_D)[0],
+		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_S)[0],
+		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_A)[0],
 	}
 
-	var p2mapping = map[pb.KeyPressEvent_Key](int){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  uinput.KeyQ,
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: uinput.KeyW,
-		pb.KeyPressEvent_KEY_ARROW_UP:    uinput.KeyE,
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  uinput.KeyR,
-		pb.KeyPressEvent_KEY_SPACE:       uinput.KeyT,
-		pb.KeyPressEvent_KEY_KEY_D:       uinput.KeyY,
-		pb.KeyPressEvent_KEY_KEY_S:       uinput.KeyU,
-		pb.KeyPressEvent_KEY_KEY_A:       uinput.KeyI,
+	var p2mapping = map[pb.KeyPressEvent_Key](x.Keycode){
+		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Q)[0],
+		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_W)[0],
+		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_E)[0],
+		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_R)[0],
+		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_T)[0],
+		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_Y)[0],
+		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_U)[0],
+		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_I)[0],
 	}
 
-	var p3mapping = map[pb.KeyPressEvent_Key](int){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  uinput.Key1,
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: uinput.Key2,
-		pb.KeyPressEvent_KEY_ARROW_UP:    uinput.Key3,
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  uinput.Key4,
-		pb.KeyPressEvent_KEY_SPACE:       uinput.Key5,
-		pb.KeyPressEvent_KEY_KEY_D:       uinput.Key6,
-		pb.KeyPressEvent_KEY_KEY_S:       uinput.Key7,
-		pb.KeyPressEvent_KEY_KEY_A:       uinput.Key8,
+	var p3mapping = map[pb.KeyPressEvent_Key](x.Keycode){
+		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_1)[0],
+		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_2)[0],
+		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_3)[0],
+		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_4)[0],
+		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_5)[0],
+		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_6)[0],
+		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_7)[0],
+		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_8)[0],
 	}
 
-	var p4mapping = map[pb.KeyPressEvent_Key](int){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  uinput.KeyZ,
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: uinput.KeyX,
-		pb.KeyPressEvent_KEY_ARROW_UP:    uinput.KeyC,
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  uinput.KeyV,
-		pb.KeyPressEvent_KEY_SPACE:       uinput.KeyB,
-		pb.KeyPressEvent_KEY_KEY_D:       uinput.KeyN,
-		pb.KeyPressEvent_KEY_KEY_S:       uinput.KeyM,
-		pb.KeyPressEvent_KEY_KEY_A:       uinput.KeyComma,
+	var p4mapping = map[pb.KeyPressEvent_Key](x.Keycode){
+		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Z)[0],
+		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_X)[0],
+		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_C)[0],
+		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_V)[0],
+		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_B)[0],
+		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_N)[0],
+		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_M)[0],
+		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_comma)[0],
 	}
 
 	game := &game{
-		typ: typ,
-		ctx:             ctx,
-		audioStream:     audioStream,
-		videoStream:     videoStream,
-		virtualKeyboard: keyboard,
-		wg:              &sync.WaitGroup{},
-		cancel:          cancel,
-		mu:              &sync.Mutex{},
-		occupancy:       occupancy,
-		player1Mapping:  p1mapping,
-		player2Mapping:  p2mapping,
-		player3Mapping:  p3mapping,
-		player4Mapping:  p4mapping,
+		typ:         typ,
+		ctx:         ctx,
+		gameExec:    gameExec,
+		audioStream: audioStream,
+		videoStream: videoStream,
+		xdisplay:       xdisplay,
+		wg:             &sync.WaitGroup{},
+		cancel:         cancel,
+		mu:             &sync.Mutex{},
+		occupancy:      occupancy,
+		player1Mapping: p1mapping,
+		player2Mapping: p2mapping,
+		player3Mapping: p3mapping,
+		player4Mapping: p4mapping,
+	}
+
+	if game.gameExec.Path != "" {
+		err = game.gameExec.Start()
+		if err != nil {
+			panic("Error starting game")
+		}
 	}
 
 	go game.awaitCancel()
@@ -182,7 +215,7 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 		return errors.New("This player's seat is occupied")
 	}
 
-	var mapping map[pb.KeyPressEvent_Key](int)
+	var mapping map[pb.KeyPressEvent_Key](x.Keycode)
 	switch idx {
 	case Player1:
 		mapping = g.player1Mapping
@@ -213,6 +246,8 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 			g.wg.Add(1)
 			defer g.wg.Done()
 
+			root := g.xdisplay.GetDefaultScreen().Root
+
 			for msg := range ch {
 				// log.Println(msg)
 				switch t := msg.(type) {
@@ -221,13 +256,14 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 					key := mapping[evt.GetKey()]
 					switch evt.GetDirection() {
 					case pb.KeyPressEvent_DIRECTION_UP:
-						g.virtualKeyboard.KeyUp(key)
+						test.FakeInput(g.xdisplay, x.KeyReleaseEventCode, uint8(key), x.CurrentTime, root, 0, 0, 0)
 					case pb.KeyPressEvent_DIRECTION_DOWN:
-						g.virtualKeyboard.KeyDown(key)
+						test.FakeInput(g.xdisplay, x.KeyPressEventCode, uint8(key), x.CurrentTime, root, 0, 0, 0)
 					default:
 						log.Printf("No direction specified")
 						continue
 					}
+					g.xdisplay.Flush()
 				default:
 					log.Printf("Unexcepted type: %T", t)
 					continue
@@ -254,7 +290,7 @@ func (g *game) awaitCancel() {
 
 	defer func() {
 		g.wg.Wait()
-		g.virtualKeyboard.Close()
+		// g.virtualKeyboard.Close()
 	}()
 
 	select {

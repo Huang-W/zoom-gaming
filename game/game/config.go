@@ -12,7 +12,7 @@ const (
 )
 
 func (typ GameType) String() string {
-	return [...]string{"", "TestGame"}[typ]
+	return [...]string{"", "TestGame", "SpaceTime", "PacPong"}[typ]
 }
 
 type mediaStreamType int

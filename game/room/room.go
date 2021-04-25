@@ -36,7 +36,7 @@ type room struct {
 	players map[game.PlayerIndex](rtc.WebRTC)
 }
 
-func NewRoom() (res Room, err error) {
+func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -44,7 +44,7 @@ func NewRoom() (res Room, err error) {
 		}
 	}()
 
-	g, err := game.NewGame(game.TestGame)
+	g, err := game.NewGame(typ, roomIndex)
 	utils.FailOnError(err, "Error creating game: ")
 
 	// Create a video track

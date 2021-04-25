@@ -36,7 +36,7 @@ type stream struct {
 	ctx      context.Context
 }
 
-func NewStream(ctx context.Context, typ mediaStreamType) (s Stream, err error) {
+func NewStream(ctx context.Context, typ mediaStreamType, roomIndex int) (s Stream, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -55,27 +55,27 @@ func NewStream(ctx context.Context, typ mediaStreamType) (s Stream, err error) {
 
 	switch typ {
 	case VideoSH:
-		cmd = exec.CommandContext(ctx, "bash", "./video.sh", ":99.0", fmt.Sprintf("%d", port))
+		cmd = exec.CommandContext(ctx, "bash", "./video.sh", fmt.Sprintf(":%d", 99-roomIndex), fmt.Sprintf("%d", port+roomIndex*2))
 		break
 	case AudioSH:
-		cmd = exec.CommandContext(ctx, "bash", "./audio.sh", fmt.Sprintf("%d", port))
+		cmd = exec.CommandContext(ctx, "bash", "./audio.sh", fmt.Sprintf("%d", port+roomIndex*2))
 		break
 	case TestH264:
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
 			"-vcodec", "libx264", "-cpu-used", "5", "-deadline", "1", "-g", "10", "-error-resilient", "1", "-auto-alt-ref", "1", "-f", "rtp",
-			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
+			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port+roomIndex*2))
 		break
 	case TestOpus:
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "lavfi", "-i", "sine=frequency=1000",
 			"-c:a", "libopus", "-b:a", "8000", "-sample_fmt", "s16p", "-ssrc", "1", "-payload_type", "111", "-f", "rtp", "-max_delay", "0", "-application", "lowdelay",
-			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
+			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port+roomIndex*2))
 		break
 	default:
 		panic(fmt.Sprintf("Invalid MediaStreamType: %s", typ))
 	}
 
-	listener, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: port})
-	zutils.FailOnError(err, "Error opening listener on port %d: ", port)
+	listener, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: port + roomIndex*2})
+	zutils.FailOnError(err, "Error opening listener on port %d: ", port+roomIndex*2)
 
 	s = &stream{
 		listener: listener,

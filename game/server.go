@@ -6,17 +6,16 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	websocket "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	"github.com/unrolled/render"
 	"github.com/urfave/negroni"
 
-	room "zoomgaming/room"
+	"zoomgaming/game"
+	"zoomgaming/room"
 	zws "zoomgaming/websocket"
 )
 
 // Upgrade an HTTP connection to WebSocket
-//
-// https://pkg.go.dev/github.com/gorilla/websocket#Upgrader
 var upgrader = websocket.Upgrader{
 	// CORS
 	CheckOrigin: func(r *http.Request) bool { return true },
@@ -25,11 +24,9 @@ var upgrader = websocket.Upgrader{
 var r room.Room
 
 // http server
-//
-// https://pkg.go.dev/github.com/urfave/negroni#Negroni
 func NewServer() *negroni.Negroni {
 	var err error
-	r, err = room.NewRoom()
+	r, err = room.NewRoom(game.TestGame, 0)
 	if err != nil {
 		log.Printf("Failed to create a room :%s", err)
 		os.Exit(1)
@@ -45,11 +42,10 @@ func NewServer() *negroni.Negroni {
 }
 
 // REST API routes
-//
-// https://pkg.go.dev/github.com/gorilla/mux#Router
 func initRoutes(mx *mux.Router, formatter *render.Render) {
 	mx.HandleFunc("/ping", pingHandler(formatter)).Methods("GET")
-	mx.HandleFunc("/demo", demoHandler(formatter)).Methods("GET")
+	mx.HandleFunc("/demo", roomHandler(formatter)).Methods("GET")
+	// mx.HandleFunc("/rooms/{room_id:[a-zA-Z0-9]+}/{gane_id:[a-zA-Z0-9]+}", roomHandler(formatter)).Methods("GET")
 }
 
 func pingHandler(formatter *render.Render) http.HandlerFunc {
@@ -58,7 +54,7 @@ func pingHandler(formatter *render.Render) http.HandlerFunc {
 	}
 }
 
-func demoHandler(formatter *render.Render) http.HandlerFunc {
+func roomHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		conn, err := upgrader.Upgrade(w, req, nil)
@@ -71,7 +67,7 @@ func demoHandler(formatter *render.Render) http.HandlerFunc {
 
 		err = r.NewPlayer(ws)
 		if err != nil {
-			log.Printf("adding new player: %s", err)
+			log.Printf("adding new player to r: %s", err)
 		}
 	}
 }
