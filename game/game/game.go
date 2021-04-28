@@ -17,7 +17,6 @@ import (
 	proto "google.golang.org/protobuf/proto"
 
 	pb "zoomgaming/proto"
-	zutils "zoomgaming/utils"
 )
 
 /**
@@ -28,19 +27,15 @@ import (
 */
 
 type Game interface {
-	AudioStream() chan (<-chan []byte)
-	VideoStream() chan (<-chan []byte)
 	AttachInputStream(<-chan proto.Message, PlayerIndex) error // mux input streams and relay to the game
-	Start() (error, error)                                     // start the pair of audio / video streams
 	Close()
 }
 
 type game struct {
-	ctx         context.Context
-	typ         GameType
-	gameExec    *exec.Cmd
-	audioStream Stream
-	videoStream Stream
+	rctx     context.Context // room context
+	gctx     context.Context // game context (for switching games)
+	typ      GameType
+	gameExec *exec.Cmd
 	xdisplay *x.Conn
 
 	wg     *sync.WaitGroup // protects merged player input channels
@@ -48,14 +43,11 @@ type game struct {
 
 	mu             *sync.Mutex
 	occupancy      map[PlayerIndex](bool)
-	player1Mapping map[pb.KeyPressEvent_Key](x.Keycode)
-	player2Mapping map[pb.KeyPressEvent_Key](x.Keycode)
-	player3Mapping map[pb.KeyPressEvent_Key](x.Keycode)
-	player4Mapping map[pb.KeyPressEvent_Key](x.Keycode)
+	playerMappings map[PlayerIndex](keycodeMapping)
 }
 
 // This must be called
-func NewGame(typ GameType, roomIndex int) (g Game, err error) {
+func NewGame(typ GameType, rctx context.Context) (g Game, err error) {
 
 	var xdisplay *x.Conn
 
@@ -69,14 +61,9 @@ func NewGame(typ GameType, roomIndex int) (g Game, err error) {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	gctx, cancel := context.WithCancel(rctx)
 
 	var gameExec *exec.Cmd
-	var audioStream Stream
-	var videoStream Stream
-
-	vctx := context.WithValue(ctx, Port, 5004)
-	actx := context.WithValue(ctx, Port, 4004)
 
 	curr_user, err := user.Current()
 	if err != nil {
@@ -86,98 +73,48 @@ func NewGame(typ GameType, roomIndex int) (g Game, err error) {
 	switch typ {
 	case TestGame:
 		gameExec = &exec.Cmd{Path: ""}
-		videoStream, err = NewStream(vctx, TestH264, roomIndex)
-		zutils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = NewStream(actx, TestOpus, roomIndex)
-		zutils.FailOnError(err, "Error starting audio stream: %s")
 	case SpaceTime:
-		gameExec = exec.CommandContext(ctx, fmt.Sprintf("%s/games/SpaceTime/start.sh", curr_user.HomeDir))
-		videoStream, err = NewStream(vctx, VideoSH, roomIndex)
-		zutils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = NewStream(actx, AudioSH, roomIndex)
-		zutils.FailOnError(err, "Error starting audio stream: %s")
+		gameExec = exec.CommandContext(gctx, fmt.Sprintf("%s/games/SpaceTime/start.sh", curr_user.HomeDir))
 	default:
 		panic("Invalid game type")
 	}
 
-	gameExec.Env = append(os.Environ(), fmt.Sprintf("DISPLAY=:%d", 99-roomIndex))
-	xdisplay, err = x.NewConnDisplay(fmt.Sprintf(":%d", 99-roomIndex))
+	gameExec.Env = append(os.Environ(), fmt.Sprintf("DISPLAY=:%d", 99))
+	xdisplay, err = x.NewConnDisplay(fmt.Sprintf(":%d", 99))
 	if err != nil {
 		// try connecting to :0 instead
 		xdisplay, err = x.NewConnDisplay(":0")
 		if err != nil {
-			panic(fmt.Sprintf("Unable to connect to display %d and :0", 99-roomIndex))
+			panic(fmt.Sprintf("Unable to connect to display %d and :0", 99))
 		}
-	}
-
-	var occupancy = map[PlayerIndex](bool){
-		Player1: false,
-		Player2: false,
-		Player3: false,
-		Player4: false,
 	}
 
 	symbols := keysyms.NewKeySymbols(xdisplay)
 
-	var p1mapping = map[pb.KeyPressEvent_Key](x.Keycode){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Left)[0],
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_Right)[0],
-		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_Up)[0],
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_Down)[0],
-		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_space)[0],
-		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_D)[0],
-		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_S)[0],
-		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_A)[0],
-	}
-
-	var p2mapping = map[pb.KeyPressEvent_Key](x.Keycode){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Q)[0],
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_W)[0],
-		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_E)[0],
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_R)[0],
-		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_T)[0],
-		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_Y)[0],
-		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_U)[0],
-		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_I)[0],
-	}
-
-	var p3mapping = map[pb.KeyPressEvent_Key](x.Keycode){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_1)[0],
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_2)[0],
-		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_3)[0],
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_4)[0],
-		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_5)[0],
-		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_6)[0],
-		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_7)[0],
-		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_8)[0],
-	}
-
-	var p4mapping = map[pb.KeyPressEvent_Key](x.Keycode){
-		pb.KeyPressEvent_KEY_ARROW_LEFT:  symbols.GetKeycodes(keysyms.XK_Z)[0],
-		pb.KeyPressEvent_KEY_ARROW_RIGHT: symbols.GetKeycodes(keysyms.XK_X)[0],
-		pb.KeyPressEvent_KEY_ARROW_UP:    symbols.GetKeycodes(keysyms.XK_C)[0],
-		pb.KeyPressEvent_KEY_ARROW_DOWN:  symbols.GetKeycodes(keysyms.XK_V)[0],
-		pb.KeyPressEvent_KEY_SPACE:       symbols.GetKeycodes(keysyms.XK_B)[0],
-		pb.KeyPressEvent_KEY_KEY_D:       symbols.GetKeycodes(keysyms.XK_N)[0],
-		pb.KeyPressEvent_KEY_KEY_S:       symbols.GetKeycodes(keysyms.XK_M)[0],
-		pb.KeyPressEvent_KEY_KEY_A:       symbols.GetKeycodes(keysyms.XK_comma)[0],
+	keysymMappings := GameMappings[typ]
+	keycodeMappings := make(map[PlayerIndex](keycodeMapping), len(keysymMappings))
+	for player, mapping := range keysymMappings {
+		keycodeMappings[player] = make(keycodeMapping, len(mapping))
+		for keyPressEvent, keysym := range mapping {
+			keycodeMappings[player][keyPressEvent] = symbols.GetKeycodes(keysym)[0]
+		}
 	}
 
 	game := &game{
-		typ:         typ,
-		ctx:         ctx,
-		gameExec:    gameExec,
-		audioStream: audioStream,
-		videoStream: videoStream,
+		typ:            typ,
+		rctx:           rctx,
+		gctx:           gctx,
+		gameExec:       gameExec,
 		xdisplay:       xdisplay,
 		wg:             &sync.WaitGroup{},
 		cancel:         cancel,
 		mu:             &sync.Mutex{},
-		occupancy:      occupancy,
-		player1Mapping: p1mapping,
-		player2Mapping: p2mapping,
-		player3Mapping: p3mapping,
-		player4Mapping: p4mapping,
+		occupancy:      make(map[PlayerIndex](bool)),
+		playerMappings: keycodeMappings,
+	}
+
+	for key := range game.playerMappings {
+		game.occupancy[key] = false
 	}
 
 	if game.gameExec.Path != "" {
@@ -193,17 +130,9 @@ func NewGame(typ GameType, roomIndex int) (g Game, err error) {
 	return
 }
 
-func (g *game) AudioStream() chan (<-chan []byte) {
-	return g.audioStream.Updates()
-}
-
-func (g *game) VideoStream() chan (<-chan []byte) {
-	return g.videoStream.Updates()
-}
-
 func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error {
 
-	if err := g.ctx.Err(); err != nil {
+	if err := g.gctx.Err(); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -215,18 +144,9 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 		return errors.New("This player's seat is occupied")
 	}
 
-	var mapping map[pb.KeyPressEvent_Key](x.Keycode)
-	switch idx {
-	case Player1:
-		mapping = g.player1Mapping
-	case Player2:
-		mapping = g.player2Mapping
-	case Player3:
-		mapping = g.player3Mapping
-	case Player4:
-		mapping = g.player4Mapping
-	default:
-		return errors.New("player  not found")
+	mapping, prs := g.playerMappings[idx]
+	if !prs {
+		return errors.New("player not found")
 	}
 
 	if g.typ == TestGame {
@@ -275,12 +195,6 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error
 	return nil
 }
 
-func (g *game) Start() (erra error, errb error) {
-	erra = g.audioStream.Start()
-	errb = g.videoStream.Start()
-	return
-}
-
 // context cancel for the vidoe, audio streams
 func (g *game) Close() {
 	g.cancel()
@@ -290,11 +204,14 @@ func (g *game) awaitCancel() {
 
 	defer func() {
 		g.wg.Wait()
+		g.Close()
 		// g.virtualKeyboard.Close()
 	}()
 
 	select {
-	case <-g.ctx.Done():
+	case <-g.gctx.Done():
+		return
+	case <-g.rctx.Done():
 		return
 	}
 }

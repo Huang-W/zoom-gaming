@@ -1,6 +1,7 @@
 package room
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -23,20 +24,26 @@ Up to 4 players in a room
 */
 
 type Room interface {
+	SwitchGame(string) error
 	NewPlayer(ws.WebSocket) error
+	Close()
 }
 
 type room struct {
-	game       game.Game
-	audioTrack *webrtc.TrackLocalStaticRTP
-	videoTrack *webrtc.TrackLocalStaticRTP
+	game        game.Game
+	ctx         context.Context
+	cancel context.CancelFunc
+	audioTrack  *webrtc.TrackLocalStaticRTP // the game's audio track, shared between all players
+	videoTrack  *webrtc.TrackLocalStaticRTP // the game's video track, shared between all players
+	audioStream game.Stream
+	videoStream game.Stream
 	// playerTracks []*webrtc.TrackLocalStaticRTP
 
-	mu      *sync.Mutex
+	mu      *sync.Mutex // protects players
 	players map[game.PlayerIndex](rtc.WebRTC)
 }
 
-func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
+func NewRoom(typ game.GameType) (res Room, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -44,7 +51,28 @@ func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 		}
 	}()
 
-	g, err := game.NewGame(typ, roomIndex)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	vctx := context.WithValue(ctx, game.Port, 5004)
+	actx := context.WithValue(ctx, game.Port, 4004)
+
+	var audioStream game.Stream
+	var videoStream game.Stream
+
+	switch typ {
+	case game.TestGame:
+		videoStream, err = game.NewStream(vctx, game.TestH264)
+		utils.FailOnError(err, "Error starting video stream: %s")
+		audioStream, err = game.NewStream(actx, game.TestOpus)
+		utils.FailOnError(err, "Error starting audio stream: %s")
+	default:
+		videoStream, err = game.NewStream(vctx, game.VideoSH)
+		utils.FailOnError(err, "Error starting video stream: %s")
+		audioStream, err = game.NewStream(actx, game.AudioSH)
+		utils.FailOnError(err, "Error starting audio stream: %s")
+	}
+
+	g, err := game.NewGame(typ, ctx)
 	utils.FailOnError(err, "Error creating game: ")
 
 	// Create a video track
@@ -56,16 +84,20 @@ func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 	utils.FailOnError(err, "Error creating audio track: ")
 
 	r := &room{
-		game:       g,
-		audioTrack: audioTrack,
-		videoTrack: videoTrack,
-		mu:         &sync.Mutex{},
-		players:    make(map[game.PlayerIndex](rtc.WebRTC)),
+		game:        g,
+		ctx:         ctx,
+		cancel: cancel,
+		audioTrack:  audioTrack,
+		videoTrack:  videoTrack,
+		audioStream: audioStream,
+		videoStream: videoStream,
+		mu:          &sync.Mutex{},
+		players:     make(map[game.PlayerIndex](rtc.WebRTC), len(game.GameMappings[typ])),
 	}
 
 	go func() {
 		select {
-		case ch := <-r.game.AudioStream():
+		case ch := <-r.audioStream.Updates():
 			go func() {
 				for pckt := range ch {
 					r.audioTrack.Write(pckt)
@@ -76,7 +108,7 @@ func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 
 	go func() {
 		select {
-		case ch := <-r.game.VideoStream():
+		case ch := <-r.videoStream.Updates():
 			go func() {
 				for pckt := range ch {
 					r.videoTrack.Write(pckt)
@@ -85,13 +117,34 @@ func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 		}
 	}()
 
-	erra, errb := r.game.Start()
-	if erra != nil || errb != nil {
-		err = errors.New(fmt.Sprintf("Unable to start game -- video: %s -- audio: %s", erra, errb))
-	}
-
 	res = r
 	return
+}
+
+func (r *room) SwitchGame(game_id string) error {
+	if len(r.players) > 0 {
+		return errors.New("Unable to switch game, players still present in room")
+	} else {
+
+		typ := game.GameTypeOf(game_id)
+		if typ == game.GameUndefined {
+			return errors.New("Unable to switch game, invalid game_id")
+		}
+
+		r.mu.Lock()
+		defer r.mu.Unlock()
+
+		r.game.Close()
+
+		g, err := game.NewGame(typ, r.ctx)
+		if err != nil {
+			return err
+		}
+
+		r.game = g
+
+		return nil
+	}
 }
 
 func (r *room) NewPlayer(ws ws.WebSocket) error {
@@ -142,6 +195,10 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 	return nil
 }
 
+func (r *room) Close() {
+	r.cancel()
+}
+
 func (r *room) removePlayer(idx game.PlayerIndex) {
 
 	r.mu.Lock()
@@ -150,5 +207,11 @@ func (r *room) removePlayer(idx game.PlayerIndex) {
 	_, prs := r.players[idx]
 	if prs {
 		delete(r.players, idx)
+	}
+
+	if prs && idx == game.Player1 {
+		for _, conn := range r.players {
+			conn.Close()
+		}
 	}
 }
