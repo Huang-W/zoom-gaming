@@ -123,7 +123,7 @@ const Room = (props) => {
     return (
         <Grid container style={{height: "100vh"}}>
             <Grid item xs={10} className={classes.centerAlign}>
-                <GameLovers />
+                {/*<GameLovers />*/}
             </Grid>
             <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                 <StyledVideo muted ref={userVideo} autoPlay playsInline />
