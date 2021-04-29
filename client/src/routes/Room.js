@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Grid} from "@material-ui/core";
+import {Grid, makeStyles} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 
 const Container = styled.div`
@@ -39,8 +39,16 @@ const StyledVideo = styled.video`
     height: 480;
 `;
 
+const useStyles = makeStyles((theme) => ({
+    centerAlign: {
+        display: "flex",
+        justifyContent: "center"
+    },
+}));
+
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
+    const classes = useStyles();
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
@@ -113,11 +121,11 @@ const Room = (props) => {
     }
 
     return (
-        <Grid container>
-            <Grid item xs={10}>
+        <Grid container style={{height: "100vh"}}>
+            <Grid item xs={10} className={classes.centerAlign}>
                 <GameLovers />
             </Grid>
-            <Grid item xs={2} container direction={"column"}>
+            <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                 <StyledVideo muted ref={userVideo} autoPlay playsInline />
                 {peers.map((peer, index) => {
                     return (

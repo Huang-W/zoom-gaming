@@ -8,14 +8,12 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
-    "simple-peer": "9.6.2",
-    "socket.io-client": "^2.3.0",
-    "styled-components": "^5.1.0",
-    "uuid": "^7.0.3",
     "firebase": "^7.14.1",
-    "formik": "^2.1.4",
     "firebase-tools": "^8.11.2",
+    "formik": "^2.1.4",
+    "google-protobuf": "~3.14.0",
     "moment": "^2.27.0",
+    "particles-bg": "^2.5.5",
     "query-string": "^6.12.1",
     "randomatic": "^3.1.1",
     "react": "^16.13.1",
@@ -27,8 +25,11 @@
     "redux": "^4.0.5",
     "redux-firestore": "^0.13.0",
     "redux-thunk": "^2.3.0",
-    "google-protobuf": "~3.14.0",
     "sdp": "^2.12.0",
+    "simple-peer": "9.6.2",
+    "socket.io-client": "^2.3.0",
+    "styled-components": "^5.1.0",
+    "uuid": "^7.0.3",
     "webrtc-adapter": "^7.7.1"
   },
   "scripts": {
@@ -39,7 +40,10 @@
     "postinstall": "yarn build"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "ignorePatterns": [
+      "**/*_pb.js"
+    ]
   },
   "browserslist": {
     "production": [

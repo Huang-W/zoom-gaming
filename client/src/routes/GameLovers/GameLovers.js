@@ -1,8 +1,8 @@
 import React from "react";
-const pb = require('./proto/signaling_pb');
-const input = require('./proto/input_pb');
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
+const pb = require('./proto/signaling_pb');
+const input = require('./proto/input_pb');
 
 const SERVER_ADDR = "34.94.73.231";
 
@@ -140,7 +140,7 @@ const GameLovers = () => {
   });
 
   return(
-    <video id="remote-video" autoPlay muted playsInline></video>
+    <video id="remote-video" autoPlay muted playsInline style={{width: "100%"}}></video>
   )
 }
 

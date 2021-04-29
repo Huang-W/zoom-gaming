@@ -1,10 +1,10 @@
 import React, {useEffect} from "react";
-import { v1 as uuid } from "uuid";
+import randomize from "randomatic";
 
 const CreateRoom = (props) => {
 
     useEffect(() => {
-        const id = uuid();
+        const id = randomize('A0', 6, {exclude: "0oO"});
         props.history.push(`/${id}`);
     })
 
