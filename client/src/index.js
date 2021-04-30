@@ -35,7 +35,7 @@ const rrfProps = {
 let config = {
   num: [4, 7],
   rps: 0.1,
-  radius: [5, 40],
+  radius: [0, 40],
   life: [1.5, 3],
   v: [2, 3],
   tha: [-40, 40],
