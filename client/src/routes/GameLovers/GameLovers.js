@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
 const pb = require('./proto/signaling_pb');
@@ -7,30 +7,12 @@ const input = require('./proto/input_pb');
 // const SERVER_ADDR = "34.94.73.231";
 const SERVER_ADDR = "w2.zoomgaming.app";
 
-const GameLovers = () => {
+const GameLovers = (props) => {
 
   let peerConnection = null; // webrtc connection
   let input_dc = null; // keyboard events are sent to the server using this
-  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/SpaceTime`); // session description is sent/received via websocket
+  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/${props.gameId}`); // session description is sent/received via websocket
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
-
-  let handleWebsocketEvent = (event) => {
-    if ( Object.getPrototypeOf(event) === MessageEvent.prototype ) {
-      let remote_sdp_answer = new pb.SessionDescription.deserializeBinary(event.data);
-      if (remote_sdp_answer) {
-        console.log("received a remote answer from server...");
-        peerConnection.setRemoteDescription({
-          type: "answer",
-          sdp: remote_sdp_answer.getSdp()
-        });
-      } else {
-        console.error("not an sdp");
-      }
-    } else {
-      console.log(`Received event with prototype of ${Object.getPrototypeOf(event)}`);
-    }
-  }
-
   webSocket.addEventListener("open", event => { console.log("ws open"); });
   webSocket.addEventListener("message", event => { handleWebsocketEvent(event); });
   webSocket.addEventListener("close", event => { console.log("ws closing"); });
@@ -57,6 +39,23 @@ const GameLovers = () => {
       };
       pc.createOffer().then(ld => {pc.setLocalDescription(ld)}).catch(reject)
     });
+  }
+
+  let handleWebsocketEvent = (event) => {
+    if ( Object.getPrototypeOf(event) === MessageEvent.prototype ) {
+      let remote_sdp_answer = new pb.SessionDescription.deserializeBinary(event.data);
+      if (remote_sdp_answer) {
+        console.log("received a remote answer from server...");
+        peerConnection.setRemoteDescription({
+          type: "answer",
+          sdp: remote_sdp_answer.getSdp()
+        });
+      } else {
+        console.error("not an sdp");
+      }
+    } else {
+      console.log(`Received event with prototype of ${Object.getPrototypeOf(event)}`);
+    }
   }
 
   let startRemoteSession = (remoteVideoNode) => {
@@ -120,9 +119,9 @@ const GameLovers = () => {
     }).then(() => pc);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const remoteVideo = document.querySelector('#remote-video');
-
+  webSocket.addEventListener("open", event => {
+    console.log("ws open");
+    var remoteVideo = document.querySelector('#remote-video');
     if (!peerConnection) {
       startRemoteSession(remoteVideo).then(pc => {
         remoteVideo.style.setProperty('visibility', 'visible');

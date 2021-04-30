@@ -3,21 +3,12 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Box, Grid, makeStyles} from "@material-ui/core";
+import {Box, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Remote from '../assets/remote.png'
-
-const Container = styled.div`
-    // padding: 10px;
-    // display: flex;
-    // justify-content: center;
-    // width: 20%;
-    // flex-wrap: wrap;
-`;
 
 const Video = (props) => {
     const ref = useRef();
@@ -56,11 +47,17 @@ const useStyles = makeStyles((theme) => ({
     button: {
         color: "white",
         fontFamily: "'Press Start 2P', cursive",
+        marginLeft: "40px",
     },
+    gameFont: {
+        fontFamily: "'Press Start 2P', cursive",
+    }
 }));
 
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [game, updateGame] = React.useState("SpaceTime");
     const classes = useStyles();
     const socketRef = useRef();
     const userVideo = useRef();
@@ -133,6 +130,40 @@ const Room = (props) => {
         return peer;
     }
 
+    const isMenuOpen = Boolean(anchorEl);
+
+    const handleProfileMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const selectGame = (game) => {
+        const { myValue } = game;
+        handleMenuClose();
+        updateGame(myValue);
+    }
+
+    const menuId = 'primary-search-account-menu';
+    const renderMenu = (
+      <Menu
+        anchorEl={anchorEl}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        id={menuId}
+        keepMounted
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={isMenuOpen}
+        onClose={handleMenuClose}
+      >
+          <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"BroForce"}>BROFORCE</MenuItem>
+          <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"SpaceTime"}>SPACETIME</MenuItem>
+      </Menu>
+    );
+
+    console.log(peers)
+
     return (
       <div style={{height: "100vh"}}>
           <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
@@ -140,12 +171,27 @@ const Room = (props) => {
                   <Box className={classes.logo}>
                       <img src={Remote} style={{height: "60px"}}/>
                   </Box>
-                  <Button className={classes.button}>Login</Button>
+                  <Button className={classes.button}>
+                      START NEW GAME
+                  </Button>
+                  <Button className={classes.button}>
+                      JOIN GAME
+                  </Button>
+                  <Button
+                    className={classes.button}
+                    aria-label="account of current user"
+                    aria-controls={menuId}
+                    aria-haspopup="true"
+                    onClick={handleProfileMenuOpen}
+                  >
+                      SELECT GAME
+                  </Button>
               </Toolbar>
           </AppBar>
+          {renderMenu}
           <Grid container style={{height: "calc(100% - 64px)"}}>
               <Grid item xs={10} className={classes.centerAlign}>
-                  <GameLovers roomId={roomID} />
+                  <GameLovers roomId={roomID} gameId={game}/>
               </Grid>
               <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                   <StyledVideo muted ref={userVideo} autoPlay playsInline />
