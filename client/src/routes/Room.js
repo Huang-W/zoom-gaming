@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Box, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
+import {Box, ButtonBase, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -56,13 +56,12 @@ const useStyles = makeStyles((theme) => ({
 
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const [game, updateGame] = React.useState("SpaceTime");
+    // const [anchorEl, setAnchorEl] = React.useState(null);
     const classes = useStyles();
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
-    const { id } = useParams();
+    const { id, gameID } = useParams();
     const roomID = id;
 
     useEffect(() => {
@@ -148,68 +147,68 @@ const Room = (props) => {
         return peer;
     }
 
-    const isMenuOpen = Boolean(anchorEl);
+    // const isMenuOpen = Boolean(anchorEl);
+    //
+    // const handleProfileMenuOpen = (event) => {
+    //     setAnchorEl(event.currentTarget);
+    // };
+    //
+    // const handleMenuClose = () => {
+    //     setAnchorEl(null);
+    // };
 
-    const handleProfileMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const selectGame = (game) => {
-        const { myValue } = game;
-        handleMenuClose();
-        updateGame(myValue);
-    }
-
-    const menuId = 'primary-search-account-menu';
-    const renderMenu = (
-      <Menu
-        anchorEl={anchorEl}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        id={menuId}
-        keepMounted
-        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        open={isMenuOpen}
-        onClose={handleMenuClose}
-      >
-          <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"BroForce"}>BROFORCE</MenuItem>
-          <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"SpaceTime"}>SPACETIME</MenuItem>
-      </Menu>
-    );
-
-    console.log(peers)
+    // const selectGame = (game) => {
+    //     const { myValue } = game;
+    //     handleMenuClose();
+    //     updateGame(myValue);
+    // }
+    //
+    // const menuId = 'primary-search-account-menu';
+    // const renderMenu = (
+    //   <Menu
+    //     anchorEl={anchorEl}
+    //     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    //     id={menuId}
+    //     keepMounted
+    //     transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    //     open={isMenuOpen}
+    //     onClose={handleMenuClose}
+    //   >
+    //       <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"Broforce"}>BROFORCE</MenuItem>
+    //       <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"SpaceTime"}>SPACETIME</MenuItem>
+    //   </Menu>
+    // );
 
     return (
       <div style={{height: "100vh"}}>
           <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
               <Toolbar>
                   <Box className={classes.logo}>
-                      <img src={Remote} style={{height: "60px"}}/>
+                      <ButtonBase onClick={() => props.history.push(`/`)}>
+                          <img src={Remote} style={{height: "60px"}}/>
+                      </ButtonBase>
                   </Box>
-                  <Button className={classes.button}>
+                  <Button className={classes.button} onClick={() => props.history.push(`/`)}>
                       START NEW GAME
                   </Button>
                   <Button className={classes.button}>
-                      JOIN GAME
+                      CHAT
                   </Button>
-                  <Button
-                    className={classes.button}
-                    aria-label="account of current user"
-                    aria-controls={menuId}
-                    aria-haspopup="true"
-                    onClick={handleProfileMenuOpen}
-                  >
-                      SELECT GAME
-                  </Button>
+                  {/*<Button*/}
+                  {/*  className={classes.button}*/}
+                  {/*  aria-label="account of current user"*/}
+                  {/*  aria-controls={menuId}*/}
+                  {/*  aria-haspopup="true"*/}
+                  {/*  onClick={handleProfileMenuOpen}*/}
+                  {/*>*/}
+                  {/*    SELECT GAME*/}
+                  {/*</Button>*/}
               </Toolbar>
           </AppBar>
-          {renderMenu}
+          {/*{renderMenu}*/}
           <Grid container style={{height: "calc(100% - 64px)"}}>
               <Grid item xs={10} className={classes.centerAlign}>
-                  <GameLovers roomId={roomID} gameId={game}/>
+                  <GameLovers roomId={roomID} gameId={gameID}/>
               </Grid>
               <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                   <StyledVideo muted ref={userVideo} autoPlay playsInline />

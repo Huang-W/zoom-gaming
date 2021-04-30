@@ -21,7 +21,7 @@ function App() {
   <Router>
     <Switch>
       <Route path="/" exact component={CreateRoom} />
-      <Route path="/:id" component={Room} />
+      <Route path="/:id/:gameID" component={Room} />
       {/*<Route exact path="/">*/}
       {/*  <Redirect to="/home" />*/}
       {/*</Route>*/}
