@@ -15,17 +15,6 @@ import {createMuiTheme} from "@material-ui/core";
 // const EndGame = lazy(() => import('./taboo/pages/EndGame'))
 // const NotFound = lazy(() => import('./taboo/pages/NotFound'))
 
-const font =  "'Press Start 2P', cursive";
-const theme = createMuiTheme({
-  typography: {
-    fontFamily: font,
-    button:{
-      textTransform: "none",
-      fontFamily: font,
-    }
-  }
-});
-
 function App() {
 
   return (
