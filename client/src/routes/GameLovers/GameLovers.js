@@ -139,6 +139,14 @@ const GameLovers = (props) => {
        webSocket.close();
      }
    });
+   return () => {
+     if (peerConnection) {
+       peerConnection.close();
+     }
+     if (webSocket) {
+       webSocket.close();
+     }
+   }
  }, [props.gameId])
 
   return(
