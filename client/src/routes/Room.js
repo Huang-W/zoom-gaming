@@ -3,12 +3,16 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Box, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
+import {Box, ButtonBase, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
-import Remote from '../assets/remote.png'
+import Remote from '../assets/remote.png';
+import VideocamIcon from '@material-ui/icons/Videocam';
+import VideocamOffIcon from '@material-ui/icons/VideocamOff';
+import MicIcon from '@material-ui/icons/Mic';
+import MicOffIcon from '@material-ui/icons/MicOff';
 
 const Video = (props) => {
     const ref = useRef();
@@ -41,6 +45,11 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: "center",
         padding: "5px"
     },
+    videoOptions: {
+        display: "flex",
+        justifyContent: "center",
+        width: "100%",
+    },
     logo: {
         flexGrow: 1,
     },
@@ -56,6 +65,8 @@ const useStyles = makeStyles((theme) => ({
 
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
+    const [mic, setMic] = useState(true);
+    const [camera, setCamera] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [game, updateGame] = React.useState("SpaceTime");
     const classes = useStyles();
@@ -132,6 +143,16 @@ const Room = (props) => {
 
     const isMenuOpen = Boolean(anchorEl);
 
+    const handleMicClick = (e) => {
+        userVideo.current.srcObject.getAudioTracks()[0].enabled = !mic;
+        setMic(!mic);
+    }
+
+    const handleCameraClick = (e) => {
+        userVideo.current.srcObject.getVideoTracks()[0].enabled = !camera;
+        setCamera(!camera);
+    }
+
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -200,6 +221,22 @@ const Room = (props) => {
                         <Video key={index} peer={peer} />
                       );
                   })}
+              </Grid>
+              <Grid className={classes.videoOptions}>
+                  {
+                      mic ? (
+                        <MicIcon onClick={handleMicClick} style={{ color: 'white', fontSize: 45, marginRight: 15 }}/>
+                      ) : (
+                        <MicOffIcon onClick={handleMicClick} style={{ color: 'red', fontSize: 45, marginRight: 15 }}/>
+                      )
+                  }
+                  {
+                      camera ? (
+                        <VideocamIcon onClick={handleCameraClick} style={{ color: 'white', fontSize: 45, marginLeft: 15 }}/>
+                      ) : (
+                        <VideocamOffIcon onClick={handleCameraClick} style={{ color: 'red', fontSize: 45, marginLeft: 15 }}/>
+                      )
+                  }
               </Grid>
           </Grid>
       </div>
