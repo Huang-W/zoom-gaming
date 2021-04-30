@@ -4,13 +4,14 @@ import { InputMap } from "./input";
 const pb = require('./proto/signaling_pb');
 const input = require('./proto/input_pb');
 
-const SERVER_ADDR = "34.94.73.231";
+// const SERVER_ADDR = "34.94.73.231";
+const SERVER_ADDR = "w2.zoomgaming.app";
 
 const GameLovers = () => {
 
   let peerConnection = null; // webrtc connection
   let input_dc = null; // keyboard events are sent to the server using this
-  let webSocket = new WebSocket(`ws://${SERVER_ADDR}:8080/demo`); // session description is sent/received via websocket
+  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo`); // session description is sent/received via websocket
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
   let handleWebsocketEvent = (event) => {

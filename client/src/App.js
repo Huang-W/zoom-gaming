@@ -7,12 +7,24 @@ import Header from './taboo/components/Header'
 import LayeredCards from './taboo/components/LayeredCards'
 import LoadingSpinner from './taboo/components/shared/LoadingSpinner'
 import { createGreetingMsg } from './taboo/utils/helpers'
+import {createMuiTheme} from "@material-ui/core";
 //Code splitting routes
 // const Home = lazy(() => import('./taboo/pages/Home'))
 // const Waiting = lazy(() => import('./taboo/pages/Waiting'))
 // const PlayGame = lazy(() => import('./taboo/pages/PlayGame'))
 // const EndGame = lazy(() => import('./taboo/pages/EndGame'))
 // const NotFound = lazy(() => import('./taboo/pages/NotFound'))
+
+const font =  "'Press Start 2P', cursive";
+const theme = createMuiTheme({
+  typography: {
+    fontFamily: font,
+    button:{
+      textTransform: "none",
+      fontFamily: font,
+    }
+  }
+});
 
 function App() {
 

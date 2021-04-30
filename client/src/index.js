@@ -13,8 +13,10 @@ import fbConfig from './taboo/utils/fbConfig'
 import rootReducer from './taboo/store/reducers/rootReducer'
 import { ThemeProvider } from 'styled-components'
 import App from './App'
+import PressStart2P from './PressStart2P-Regular.ttf'
 import GlobalStyle from './taboo/global-design/globalStyles'
-import theme from './taboo/global-design/theme'
+// import theme from './taboo/global-design/theme'
+import {createMuiTheme} from "@material-ui/core";
 
 const store = createStore(
   rootReducer,
@@ -64,6 +66,36 @@ if (Math.random() > 0.85) {
     }
   });
 }
+
+const pressStart = {
+  fontFamily: 'Press Start 2P',
+  fontStyle: 'cursive',
+  fontDisplay: 'swap',
+  fontWeight: 400,
+  src: `
+    local('PressStart2P'),
+    local('PressStart2P-Regular'),
+    url(${PressStart2P}) format('ttf')
+  `,
+  unicodeRange:
+    'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF',
+};
+const theme = createMuiTheme({
+  typography: {
+    fontFamily: [
+      'Press Start 2P',
+      'cursive',
+    ].join(','),
+  },
+  overrides: {
+    MuiCssBaseline: {
+      '@global': {
+        '@font-face': [pressStart],
+      },
+    },
+  },
+});
+
 
 ReactDOM.render(
   <React.StrictMode>

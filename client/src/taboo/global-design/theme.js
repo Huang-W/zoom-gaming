@@ -13,7 +13,7 @@ const theme = {
     grayDark2: "#333333"
   },
   text: {
-    display: "'Oswald', sans-serif",
+    display: "'Press Start 2P', cursive",
   },
   fontSize: {
     xsmall: "1.8rem",
@@ -21,6 +21,13 @@ const theme = {
     medium: "2.7rem",
     large: "4rem",
     xlarge: "7rem",
+  },
+  typography: {
+    fontFamily: "'Press Start 2P', cursive",
+  },
+  button:{
+    textTransform: "none",
+    fontFamily: "'Press Start 2P', cursive",
   },
 }
 

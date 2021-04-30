@@ -5,6 +5,11 @@ import styled from "styled-components";
 import {useParams} from "react-router";
 import {Grid, makeStyles} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
 
 const Container = styled.div`
     // padding: 10px;
@@ -42,7 +47,15 @@ const StyledVideo = styled.video`
 const useStyles = makeStyles((theme) => ({
     centerAlign: {
         display: "flex",
-        justifyContent: "center"
+        justifyContent: "center",
+        padding: "5px"
+    },
+    title: {
+        flexGrow: 1,
+    },
+    button: {
+        color: "#828282",
+        fontFamily: '',
     },
 }));
 
@@ -121,19 +134,29 @@ const Room = (props) => {
     }
 
     return (
-        <Grid container style={{height: "100vh"}}>
-            <Grid item xs={10} className={classes.centerAlign}>
-                {/*<GameLovers />*/}
-            </Grid>
-            <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
-                <StyledVideo muted ref={userVideo} autoPlay playsInline />
-                {peers.map((peer, index) => {
-                    return (
-                      <Video key={index} peer={peer} />
-                    );
-                })}
-            </Grid>
-        </Grid>
+      <div style={{height: "100vh"}}>
+          <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
+              <Toolbar>
+                  <Typography variant="h6" className={classes.title}>
+                      News
+                  </Typography>
+                  <Button className={classes.button}>Login</Button>
+              </Toolbar>
+          </AppBar>
+          <Grid container style={{height: "calc(100% - 64px)"}}>
+              <Grid item xs={10} className={classes.centerAlign}>
+                  <GameLovers roomId={roomID} />
+              </Grid>
+              <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
+                  <StyledVideo muted ref={userVideo} autoPlay playsInline />
+                  {peers.map((peer, index) => {
+                      return (
+                        <Video key={index} peer={peer} />
+                      );
+                  })}
+              </Grid>
+          </Grid>
+      </div>
     );
 };
 
