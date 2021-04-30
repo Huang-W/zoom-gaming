@@ -3,13 +3,13 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Grid, makeStyles} from "@material-ui/core";
+import {Box, Grid, makeStyles} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
+import Remote from '../assets/remote.png'
 
 const Container = styled.div`
     // padding: 10px;
@@ -50,12 +50,12 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: "center",
         padding: "5px"
     },
-    title: {
+    logo: {
         flexGrow: 1,
     },
     button: {
-        color: "#828282",
-        fontFamily: '',
+        color: "white",
+        fontFamily: "'Press Start 2P', cursive",
     },
 }));
 
@@ -137,9 +137,9 @@ const Room = (props) => {
       <div style={{height: "100vh"}}>
           <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
               <Toolbar>
-                  <Typography variant="h6" className={classes.title}>
-                      News
-                  </Typography>
+                  <Box className={classes.logo}>
+                      <img src={Remote} style={{height: "60px"}}/>
+                  </Box>
                   <Button className={classes.button}>Login</Button>
               </Toolbar>
           </AppBar>

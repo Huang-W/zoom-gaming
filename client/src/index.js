@@ -13,7 +13,6 @@ import fbConfig from './taboo/utils/fbConfig'
 import rootReducer from './taboo/store/reducers/rootReducer'
 import { ThemeProvider } from 'styled-components'
 import App from './App'
-import PressStart2P from './PressStart2P-Regular.ttf'
 import GlobalStyle from './taboo/global-design/globalStyles'
 // import theme from './taboo/global-design/theme'
 import {createMuiTheme, CssBaseline} from "@material-ui/core";
@@ -68,24 +67,12 @@ if (Math.random() > 0.85) {
 }
 
 
-const theme = createMuiTheme({
-  typography: {
-    fontFamily: [
-      'Press Start 2P',
-      'cursive',
-    ].join(','),
-  },
-});
-
-
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <ReactReduxFirebaseProvider {...rrfProps}>
-        <ThemeProvider theme={theme}>
           <App />
           <ParticlesBg type="custom" config={config} bg={true} />
-        </ThemeProvider>
       </ReactReduxFirebaseProvider>
     </Provider>
   </React.StrictMode>,

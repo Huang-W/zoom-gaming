@@ -11,7 +11,7 @@ const GameLovers = () => {
 
   let peerConnection = null; // webrtc connection
   let input_dc = null; // keyboard events are sent to the server using this
-  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo`); // session description is sent/received via websocket
+  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/SpaceTime`); // session description is sent/received via websocket
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
   let handleWebsocketEvent = (event) => {
