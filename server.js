@@ -6,13 +6,16 @@ const server = http.createServer(app);
 const socket = require("socket.io");
 const io = socket(server);
 const path = require("path");
+let roomIDLocal = "";
 
 const users = {};
 
 const socketToRoom = {};
+const NEW_CHAT_MESSAGE_EVENT = "newChatMessage";
 
 io.on('connection', socket => {
     socket.on("join room", roomID => {
+        roomIDLocal = roomID
         if (users[roomID]) {
             users[roomID].push(socket.id);
         } else {
@@ -22,6 +25,15 @@ io.on('connection', socket => {
         const usersInThisRoom = users[roomID].filter(id => id !== socket.id);
 
         socket.emit("all users", usersInThisRoom);
+    });
+
+    // Join a conversation
+    // const { roomId } = socket.handshake.query;
+    socket.join(roomIDLocal);
+
+    // Listen for new messages
+    socket.on(NEW_CHAT_MESSAGE_EVENT, (data) => {
+        io.in(roomIDLocal).emit(NEW_CHAT_MESSAGE_EVENT, data);
     });
 
     socket.on("sending signal", payload => {

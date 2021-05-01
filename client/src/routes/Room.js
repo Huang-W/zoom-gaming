@@ -13,6 +13,7 @@ import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
+import ChatRoom from "./ChatRoom";
 
 const Video = (props) => {
     const ref = useRef();
@@ -214,7 +215,7 @@ const Room = (props) => {
                       START NEW GAME
                   </Button>
                   <Button className={classes.button}>
-                      JOIN GAME
+                      CHAT
                   </Button>
                   <Button
                     className={classes.button}
@@ -256,6 +257,7 @@ const Room = (props) => {
                       )
                   }
               </Grid>
+              <ChatRoom/>
           </Grid>
       </div>
     );
