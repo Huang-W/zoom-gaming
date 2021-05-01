@@ -139,7 +139,7 @@ const GameLovers = (props) => {
        webSocket.close();
      }
    });
- }, [])
+ }, [props.gameId])
 
   return(
     <video id="remote-video" autoPlay muted playsInline style={{width: "100%"}}></video>

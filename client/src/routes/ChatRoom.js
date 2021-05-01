@@ -3,9 +3,11 @@ import React from "react";
 
 import "./ChatRoom.css";
 import useChat from "./useChat";
+import {useParams} from "react-router";
 
 const ChatRoom = (props) => {
-  const { roomId } = props.match.params; // Gets roomId from URL
+  const { id } = useParams(); // Gets roomId from URL
+  const roomId = id;
   const { messages, sendMessage } = useChat(roomId); // Creates a websocket and manages messaging
   const [newMessage, setNewMessage] = React.useState(""); // Message to be sent
 

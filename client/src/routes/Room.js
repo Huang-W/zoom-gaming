@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Box, ButtonBase, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
+import {Box, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -22,7 +22,7 @@ const Video = (props) => {
         props.peer.on("stream", stream => {
             ref.current.srcObject = stream;
         })
-    }, []);
+    }, [props.peer]);
 
     return (
         <StyledVideo playsInline autoPlay ref={ref} />
@@ -128,7 +128,7 @@ const Room = (props) => {
                 setPeers(peers);
             })
         })
-    }, []);
+    }, [roomID]);
 
     function createPeer(userToSignal, callerID, stream) {
         const peer = new Peer({
@@ -209,7 +209,7 @@ const Room = (props) => {
           <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
               <Toolbar>
                   <Box className={classes.logo}>
-                      <img src={Remote} style={{height: "60px"}}/>
+                      <img src={Remote} alt={"remote"} style={{height: "60px"}}/>
                   </Box>
                   <Button className={classes.button}>
                       START NEW GAME
