@@ -60,7 +60,7 @@ func (ws *webSocket) Send(msg []byte) error {
 	w, err := ws.conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-			log.Printf("Closing Error: %s", err)
+			// log.Printf("Closing Error: %s", err)
 		}
 		return err
 	}
@@ -68,7 +68,7 @@ func (ws *webSocket) Send(msg []byte) error {
 	w.Write(msg)
 
 	if err = w.Close(); err != nil {
-		log.Printf("Error closing message: %s", err)
+		// log.Printf("Error closing message: %s", err)
 		return err
 	}
 

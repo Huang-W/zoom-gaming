@@ -31,7 +31,7 @@ func NewDataChannel(label DataChannelLabel, dc_impl *webrtc.DataChannel) DataCha
 	dc_impl.OnOpen(func() {
 		dc.receiver = make(chan proto.Message, 1024)
 		dc.updates <- dc.receiver
-		log.Printf("Data Channel '%s'-'%d' open.\n", dc_impl.Label(), *(dc_impl.ID()))
+		// log.Printf("Data Channel '%s'-'%d' open.\n", dc_impl.Label(), *(dc_impl.ID()))
 	})
 
 	dc_impl.OnMessage(func(msg webrtc.DataChannelMessage) {

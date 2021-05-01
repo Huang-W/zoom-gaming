@@ -4,13 +4,14 @@ import adapter from "node_modules/webrtc-adapter";
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
 
-// const SERVER_ADDR = "34.94.73.231";
-const SERVER_ADDR = "127.0.0.1";
+const SERVER_ADDR = "w2.zoomgaming.app";
+// const SERVER_ADDR = "127.0.0.1";
 
 (function() {
   let peerConnection = null; // webrtc connection
   let input_dc = null; // keyboard events are sent to the server using this
-  let webSocket = new WebSocket(`ws://${SERVER_ADDR}:8080/demo`); // session description is sent/received via websocket
+  // let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/SpaceTime`); // session description is sent/received via websocket
+  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/Broforce`); // session description is sent/received via websocket
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
   let handleWebsocketEvent = (event) => {
@@ -30,7 +31,6 @@ const SERVER_ADDR = "127.0.0.1";
     }
   }
 
-  webSocket.addEventListener("open", event => { console.log("ws open"); });
   webSocket.addEventListener("message", event => { handleWebsocketEvent(event); });
   webSocket.addEventListener("close", event => { console.log("ws closing"); });
   webSocket.onerror = function(event) { console.error("WebSocket error observed:", event); };
@@ -119,8 +119,9 @@ const SERVER_ADDR = "127.0.0.1";
     }).then(() => pc);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const remoteVideo = document.querySelector('#remote-video');
+  webSocket.addEventListener("open", event => {
+    console.log("ws open");
+    var remoteVideo = document.querySelector('#remote-video');
 
     if (!peerConnection) {
       startRemoteSession(remoteVideo).then(pc => {

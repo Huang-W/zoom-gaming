@@ -152,11 +152,7 @@ func (w *webRTC) watchWebSocket() {
 			if !ok {
 				return
 			}
-			log.Println("opened!")
 			for b := range ch {
-
-				log.Println("message on ws: ")
-
 				var msg pb.SessionDescription
 				if err := proto.Unmarshal(b, msg.ProtoReflect().Interface()); err != nil {
 					log.Printf("Error unmarshaling message: %v", b)
@@ -166,10 +162,8 @@ func (w *webRTC) watchWebSocket() {
 					zutils.WarnOnError(err, "Error handling client offer: %s")
 				}
 			}
-			log.Println("closed?")
 		}
 	}
-	log.Println("exited?")
 }
 
 // Received an offer from the browser client
@@ -363,19 +357,19 @@ func (w *webRTC) handleSessionDescription(msg *pb.SessionDescription) error {
 	})
 
 	w.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		log.Printf("ICE Connection State has changed: %s", connectionState.String())
+		// log.Printf("ICE Connection State has changed: %s", connectionState.String())
 		if connectionState == webrtc.ICEConnectionStateConnected {
-			log.Println("ConnectionStateConnected")
+			// log.Println("ConnectionStateConnected")
 		}
 		if connectionState == webrtc.ICEConnectionStateFailed || connectionState == webrtc.ICEConnectionStateClosed || connectionState == webrtc.ICEConnectionStateDisconnected {
 			w.Close()
 		}
 	})
 
+	/**
 	w.conn.OnICEGatheringStateChange(func(s webrtc.ICEGathererState) {
 		log.Println("ICE Gatherer State: ", s.String())
 	})
-	/**
 	w.conn.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Create a local track, all our SFU clients will be fed via this track
 		localTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(

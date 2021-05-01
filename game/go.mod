@@ -3,6 +3,7 @@ module zoomgaming
 go 1.15
 
 require (
+	github.com/bendahl/uinput v1.4.1 // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
@@ -13,4 +14,5 @@ require (
 	github.com/unrolled/render v1.0.3
 	github.com/urfave/negroni v1.0.0
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/bendahl/uinput.v1 v1.1.1 // indirect
 )

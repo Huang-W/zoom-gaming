@@ -1,12 +1,14 @@
 package room
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/pion/webrtc/v3"
+
+	uinput "gopkg.in/bendahl/uinput.v1"
 
 	game "zoomgaming/game"
 	utils "zoomgaming/utils"
@@ -31,8 +33,7 @@ type Room interface {
 
 type room struct {
 	game        game.Game
-	ctx         context.Context
-	cancel context.CancelFunc
+	typ         game.GameType
 	audioTrack  *webrtc.TrackLocalStaticRTP // the game's audio track, shared between all players
 	videoTrack  *webrtc.TrackLocalStaticRTP // the game's video track, shared between all players
 	audioStream game.Stream
@@ -51,28 +52,23 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	vctx := context.WithValue(ctx, game.Port, 5004)
-	actx := context.WithValue(ctx, game.Port, 4004)
-
 	var audioStream game.Stream
 	var videoStream game.Stream
 
 	switch typ {
 	case game.TestGame:
-		videoStream, err = game.NewStream(vctx, game.TestH264)
+		videoStream, err = game.NewStream(game.TestH264)
 		utils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = game.NewStream(actx, game.TestOpus)
+		audioStream, err = game.NewStream(game.TestOpus)
 		utils.FailOnError(err, "Error starting audio stream: %s")
 	default:
-		videoStream, err = game.NewStream(vctx, game.VideoSH)
+		videoStream, err = game.NewStream(game.VideoSH)
 		utils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = game.NewStream(actx, game.AudioSH)
+		audioStream, err = game.NewStream(game.AudioSH)
 		utils.FailOnError(err, "Error starting audio stream: %s")
 	}
 
-	g, err := game.NewGame(typ, ctx)
+	g, err := game.NewGame(typ)
 	utils.FailOnError(err, "Error creating game: ")
 
 	// Create a video track
@@ -85,14 +81,13 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 
 	r := &room{
 		game:        g,
-		ctx:         ctx,
-		cancel: cancel,
+		typ:         typ,
 		audioTrack:  audioTrack,
 		videoTrack:  videoTrack,
 		audioStream: audioStream,
 		videoStream: videoStream,
 		mu:          &sync.Mutex{},
-		players:     make(map[game.PlayerIndex](rtc.WebRTC), len(game.GameMappings[typ])),
+		players:     make(map[game.PlayerIndex](rtc.WebRTC)),
 	}
 
 	go func() {
@@ -122,26 +117,30 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 }
 
 func (r *room) SwitchGame(game_id string) error {
-	if len(r.players) > 0 {
-		return errors.New("Unable to switch game, players still present in room")
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	typ := game.GameTypeOf(game_id)
+
+	if typ == game.GameUndefined || r.typ == typ {
+		return errors.New("Unable to switch game...")
 	} else {
 
-		typ := game.GameTypeOf(game_id)
-		if typ == game.GameUndefined {
-			return errors.New("Unable to switch game, invalid game_id")
-		}
+		r.game.Stop()
 
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		r.game.Close()
-
-		g, err := game.NewGame(typ, r.ctx)
+		g, err := game.NewGame(typ)
 		if err != nil {
 			return err
 		}
 
+		for _, conn := range r.players {
+			conn.Close()
+		}
+		r.players = make(map[game.PlayerIndex](rtc.WebRTC))
+
 		r.game = g
+		r.typ = typ
 
 		return nil
 	}
@@ -153,18 +152,17 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 	defer r.mu.Unlock()
 
 	var idx game.PlayerIndex
-	players := []game.PlayerIndex{game.Player1, game.Player2, game.Player3, game.Player4}
-
-	for _, p := range players {
-		_, prs := r.players[p]
+	mappings := []game.PlayerIndex{game.Player1, game.Player2, game.Player3, game.Player4}
+	for _, player := range mappings {
+		_, prs := r.players[player]
 		if !prs {
-			idx = p
+			idx = player
 			break
 		}
 	}
 
-	if idx == 0 {
-		return errors.New("Only 4 players at a time")
+	if idx == game.PlayerUndefined {
+		return errors.New(fmt.Sprintf("Only %d allowed players at a time", len(r.keycodeMappings)))
 	}
 
 	rtc, err := rtc.NewWebRTC(ws, r.videoTrack, r.audioTrack)
@@ -175,9 +173,15 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 	// CHANGE THIS: Use the first data channel (GameInput) as input for game
 	dcs := rtc.DataChannels()
 	go func() {
+		// initialize keyboard and check for possible errors
+		keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte(fmt.Sprintf("%s_virtualkeyboard_%d", r.typ, idx)))
+		if err != nil {
+			return err
+		}
+		defer keyboard.Close()
 		defer r.removePlayer(idx) // remove player if the rtc connection shuts down
 		for ch := range dcs {
-			r.game.AttachInputStream(ch, idx)
+			r.game.AttachInputStream(ch, idx, keyboard)
 		}
 	}()
 	/**
@@ -192,11 +196,14 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 	*/
 	r.players[idx] = rtc
 
+	log.Println("number of players in the room after adding: ", len(r.players))
+
 	return nil
 }
 
 func (r *room) Close() {
-	r.cancel()
+	r.videoStream.Stop()
+	r.audioStream.Stop()
 }
 
 func (r *room) removePlayer(idx game.PlayerIndex) {
@@ -207,11 +214,5 @@ func (r *room) removePlayer(idx game.PlayerIndex) {
 	_, prs := r.players[idx]
 	if prs {
 		delete(r.players, idx)
-	}
-
-	if prs && idx == game.Player1 {
-		for _, conn := range r.players {
-			conn.Close()
-		}
 	}
 }
