@@ -13,6 +13,7 @@ import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
+import ChatRoom from "./ChatRoom";
 
 const Video = (props) => {
     const ref = useRef();
@@ -182,6 +183,15 @@ const Room = (props) => {
                   <Button className={classes.button}>
                       CHAT
                   </Button>
+                  <Button
+                    className={classes.button}
+                    aria-label="account of current user"
+                    aria-controls={menuId}
+                    aria-haspopup="true"
+                    onClick={handleProfileMenuOpen}
+                  >
+                      SELECT GAME
+                  </Button>
               </Toolbar>
           </AppBar>
           <Grid container style={{height: "calc(100% - 64px)"}}>
@@ -212,6 +222,7 @@ const Room = (props) => {
                       )
                   }
               </Grid>
+              <ChatRoom/>
           </Grid>
       </div>
     );
