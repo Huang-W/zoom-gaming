@@ -65,11 +65,8 @@ const useStyles = makeStyles((theme) => ({
 
 const Room = (props) => {
     const [peers, setPeers] = useState([]);
-    // const [anchorEl, setAnchorEl] = React.useState(null);
     const [mic, setMic] = useState(true);
     const [camera, setCamera] = useState(true);
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const [game, updateGame] = React.useState("SpaceTime");
     const classes = useStyles();
     const socketRef = useRef();
     const userVideo = useRef();
@@ -160,8 +157,6 @@ const Room = (props) => {
         return peer;
     }
 
-    const isMenuOpen = Boolean(anchorEl);
-
     const handleMicClick = (e) => {
         userVideo.current.srcObject.getAudioTracks()[0].enabled = !mic;
         setMic(!mic);
@@ -171,51 +166,6 @@ const Room = (props) => {
         userVideo.current.srcObject.getVideoTracks()[0].enabled = !camera;
         setCamera(!camera);
     }
-
-    // const handleProfileMenuOpen = (event) => {
-    //     setAnchorEl(event.currentTarget);
-    // };
-    //
-    // const handleMenuClose = () => {
-    //     setAnchorEl(null);
-    // };
-
-    // const selectGame = (game) => {
-    //     const { myValue } = game;
-    //     handleMenuClose();
-    //     updateGame(myValue);
-    // }
-    // const isMenuOpen = Boolean(anchorEl);
-    //
-    // const handleProfileMenuOpen = (event) => {
-    //     setAnchorEl(event.currentTarget);
-    // };
-    //
-    // const handleMenuClose = () => {
-    //     setAnchorEl(null);
-    // };
-
-    // const selectGame = (game) => {
-    //     const { myValue } = game;
-    //     handleMenuClose();
-    //     updateGame(myValue);
-    // }
-    //
-    // const menuId = 'primary-search-account-menu';
-    // const renderMenu = (
-    //   <Menu
-    //     anchorEl={anchorEl}
-    //     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    //     id={menuId}
-    //     keepMounted
-    //     transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    //     open={isMenuOpen}
-    //     onClose={handleMenuClose}
-    //   >
-    //       <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"Broforce"}>BROFORCE</MenuItem>
-    //       <MenuItem onClick={(e) => selectGame(e.currentTarget.dataset)} className={classes.gameFont} data-my-value={"SpaceTime"}>SPACETIME</MenuItem>
-    //   </Menu>
-    // );
 
     return (
       <div style={{height: "100vh"}}>
@@ -232,18 +182,8 @@ const Room = (props) => {
                   <Button className={classes.button}>
                       CHAT
                   </Button>
-                  {/*<Button*/}
-                  {/*  className={classes.button}*/}
-                  {/*  aria-label="account of current user"*/}
-                  {/*  aria-controls={menuId}*/}
-                  {/*  aria-haspopup="true"*/}
-                  {/*  onClick={handleProfileMenuOpen}*/}
-                  {/*>*/}
-                  {/*    SELECT GAME*/}
-                  {/*</Button>*/}
               </Toolbar>
           </AppBar>
-          {/*{renderMenu}*/}
           <Grid container style={{height: "calc(100% - 64px)"}}>
               <Grid item xs={10} className={classes.centerAlign}>
                   <GameLovers roomId={roomID} gameId={gameID}/>
