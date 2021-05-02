@@ -14,6 +14,8 @@ import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
 import ChatRoom from "./ChatRoom";
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
 
 const Video = (props) => {
     const ref = useRef();
@@ -186,6 +188,15 @@ const Room = (props) => {
         updateGame(myValue);
     }
 
+    const [openChat, setOpenChat] = React.useState(false);
+    const handleClickOpenChat = () => {
+        console.log("open");
+        setOpenChat(true);
+    };
+    const handleCloseChat = () => {
+        setOpenChat(false);
+    };
+
     const menuId = 'primary-search-account-menu';
     const renderMenu = (
       <Menu
@@ -214,9 +225,21 @@ const Room = (props) => {
                   <Button className={classes.button}>
                       START NEW GAME
                   </Button>
-                  <Button className={classes.button}>
+                  <Button className={classes.button} onClick={handleClickOpenChat}>
                       CHAT
                   </Button>
+                  <Dialog
+                    open={openChat}
+                    keepMounted
+                    onClose={handleCloseChat}
+                    style={{width: "100px"}}
+                    aria-labelledby="alert-dialog-slide-title"
+                    aria-describedby="alert-dialog-slide-description"
+                  >
+                      <DialogContent >
+                        <ChatRoom/>
+                      </DialogContent>
+                  </Dialog>
                   <Button
                     className={classes.button}
                     aria-label="account of current user"
@@ -257,7 +280,6 @@ const Room = (props) => {
                       )
                   }
               </Grid>
-              <ChatRoom/>
           </Grid>
       </div>
     );
