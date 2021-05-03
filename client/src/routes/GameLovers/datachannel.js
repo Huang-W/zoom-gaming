@@ -15,7 +15,7 @@ var DCLabel = {
    * @return {string}
    */
   String: (label) => {
-     if (label == DCLabel.Label.GAME_INPUT)
+     if (label === DCLabel.Label.GAME_INPUT)
        return "GameInput";
      else
        throw new Error("Invalid label: " + label);
@@ -25,7 +25,7 @@ var DCLabel = {
    * @return {number}
    */
   Id: (label) => {
-    if (label == DCLabel.Label.GAME_INPUT)
+    if (label === DCLabel.Label.GAME_INPUT)
       return 0;
     else
       throw new Error("Invalid label: " + label);
@@ -35,7 +35,7 @@ var DCLabel = {
    * @return {!proto.Message}
    */
   PbMessageType: (label) => {
-    if (label == DCLabel.Label.GAME_INPUT)
+    if (label === DCLabel.Label.GAME_INPUT)
       return input.InputEvent;
     else
       throw new Error("Invalid label: " + label);

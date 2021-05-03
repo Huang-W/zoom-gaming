@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import Peer from "simple-peer";
 import styled from "styled-components";
 import {useParams} from "react-router";
-import {Box, ButtonBase, Grid, makeStyles, Menu, MenuItem} from "@material-ui/core";
+import {Box, ButtonBase, Grid, makeStyles } from "@material-ui/core";
 import GameLovers from "./GameLovers/GameLovers";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -14,6 +14,8 @@ import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
 import ChatRoom from "./ChatRoom";
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
 
 const Video = (props) => {
     const ref = useRef();
@@ -61,7 +63,19 @@ const useStyles = makeStyles((theme) => ({
     },
     gameFont: {
         fontFamily: "'Press Start 2P', cursive",
-    }
+    },
+    chatDialog: {
+        display: "flex",
+        justifyContent: "center",
+        width: "50vw",
+        height: "60vw",
+        // "& .MuiPaper-root": {
+        //     backgroundColor: "white",
+        //     border: "solid 5px white",
+        //     borderRadius: 0,
+        //     fontFamily: "'Press Start 2P', cursive",
+        // },
+    },
 }));
 
 const Room = (props) => {
@@ -168,6 +182,15 @@ const Room = (props) => {
         setCamera(!camera);
     }
 
+    const [openChat, setOpenChat] = React.useState(false);
+    const handleClickOpenChat = () => {
+        console.log("open");
+        setOpenChat(true);
+    };
+    const handleCloseChat = () => {
+        setOpenChat(false);
+    };
+
     return (
       <div style={{height: "100vh"}}>
           <AppBar position="static" style={{backgroundColor: "#2b2b2b"}}>
@@ -180,18 +203,21 @@ const Room = (props) => {
                   <Button className={classes.button} onClick={() => props.history.push(`/`)}>
                       START NEW GAME
                   </Button>
-                  <Button className={classes.button}>
+                  <Button className={classes.button} onClick={handleClickOpenChat}>
                       CHAT
                   </Button>
-                  <Button
-                    className={classes.button}
-                    aria-label="account of current user"
-                    aria-controls={menuId}
-                    aria-haspopup="true"
-                    onClick={handleProfileMenuOpen}
+                  <Dialog
+                    open={openChat}
+                    keepMounted
+                    onClose={handleCloseChat}
+                    className={classes.chatDialog}
+                    aria-labelledby="alert-dialog-slide-title"
+                    aria-describedby="alert-dialog-slide-description"
                   >
-                      SELECT GAME
-                  </Button>
+                      <DialogContent >
+                        <ChatRoom/>
+                      </DialogContent>
+                  </Dialog>
               </Toolbar>
           </AppBar>
           <Grid container style={{height: "calc(100% - 64px)"}}>
@@ -222,7 +248,6 @@ const Room = (props) => {
                       )
                   }
               </Grid>
-              <ChatRoom/>
           </Grid>
       </div>
     );
