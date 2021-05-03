@@ -16,6 +16,7 @@ import MicOffIcon from '@material-ui/icons/MicOff';
 import ChatRoom from "./ChatRoom";
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
+import {Transition} from "./CreateRoom";
 
 const Video = (props) => {
     const ref = useRef();
@@ -67,14 +68,12 @@ const useStyles = makeStyles((theme) => ({
     chatDialog: {
         display: "flex",
         justifyContent: "center",
-        width: "50vw",
-        height: "60vw",
-        // "& .MuiPaper-root": {
-        //     backgroundColor: "white",
-        //     border: "solid 5px white",
-        //     borderRadius: 0,
-        //     fontFamily: "'Press Start 2P', cursive",
-        // },
+        alignItems: "center",
+        "& .MuiPaper-root": {
+            backgroundColor: "white",
+            borderRadius: 0,
+            fontFamily: "'Press Start 2P', cursive",
+        },
     },
 }));
 
@@ -208,14 +207,13 @@ const Room = (props) => {
                   <Dialog
                     open={openChat}
                     keepMounted
+                    TransitionComponent={Transition}
                     onClose={handleCloseChat}
                     className={classes.chatDialog}
                     aria-labelledby="alert-dialog-slide-title"
                     aria-describedby="alert-dialog-slide-description"
                   >
-                      <DialogContent >
-                        <ChatRoom/>
-                      </DialogContent>
+                    <ChatRoom/>
                   </Dialog>
               </Toolbar>
           </AppBar>

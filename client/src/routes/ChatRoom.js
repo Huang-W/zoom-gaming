@@ -1,61 +1,72 @@
-
 import React from "react";
-
-import "./ChatRoom.css";
 import useChat from "./useChat";
 import {useParams} from "react-router";
-import {Box, Grid, makeStyles} from "@material-ui/core";
+import {Box, makeStyles} from "@material-ui/core";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
-  centerAlign: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "5px"
-  },
-  button: {
-    color: "white",
-    fontFamily: "'Press Start 2P', cursive",
-    marginLeft: "40px",
-  },
-  gameFont: {
-    fontFamily: "'Press Start 2P', cursive",
-  },
   chatRoomContainer: {
-    width: "50vw",
-    height: "60vw",
+    backgroundColor: "black",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "40vw",
+    height: "45vw",
+    border: "solid 5px white",
+    overflow: "-moz-hidden-unscrollable",
   },
   messagesContainer: {
     display: "flex",
-    flexGrow: "1",
-    minHeight: "20%",
     overflow: "auto",
+    width: "100%",
     border: "1px",
-    borderRadius: "7px",
+    borderRadius: 0,
+    borderColor: "white",
+    fontFamily: "'Press Start 2P', cursive",
+  },
+  messageItem: {
+    width: "60%",
+    minWidth: "80px",
+    margin: "8px",
+    padding: "12px 8px",
+    wordBreak: "break-word",
+    borderRadius: 0,
+    color: "white",
   },
   myMessage: {
     backgroundColor: "#008080",
     marginLeft: "auto",
+    fontFamily: "'Press Start 2P', cursive",
   },
   receivedMessage: {
-    backgroundColor: "#3f4042",
+    backgroundColor: "#708090",
     marginRight: "auto",
+    fontFamily: "'Press Start 2P', cursive",
   },
   newMessageInputField: {
-    height: "20%",
-    maxHeight: "50%",
+    height: "100px",
+    width: "300px",
     fontSize: "20px",
     padding: "8px 12px",
-    resize: "none",
+    borderRadius: 0,
+    fontFamily: "'Press Start 2P', cursive",
+
   },
   sendMessageButton: {
-    fontSize: "28px",
     fontWeight: 600,
     color: "white",
-    background: "#31a24c",
+    background: "black",
     padding: "24px 12px",
-    border: "none",
     width: "200px",
     height: "75px",
+    fontFamily: "'Press Start 2P', cursive",
+    fontSize: "30px",
+    margin: "50px",
+    border: "dashed 5px white",
+    borderRadius: 0,
+  },
+  boxPadding: {
+    padding: "0.5%",
   },
 }));
 
@@ -76,36 +87,34 @@ const ChatRoom = (props) => {
   };
 
   return (
-    <Box className={classes.chatRoomContainer}>
-      <Grid container spacing={1} direction={"column"}>
-        <Grid container item xs={9} className={classes.messagesContainer}>
-          <ol>
-            {messages.map((message, i) => (
-              <li
-                key={i}
-                className={`message-item ${
-                  message.ownedByCurrentUser ? classes.myMessage : classes.receivedMessage
-                }`}
-              >
-                {message.body}
-              </li>
-            ))}
-          </ol>
-        </Grid>
-        <Grid container item xs={2}>
+    <Box className={classes.chatRoomContainer} flexDirection={"column"}>
+      <Box flexGrow={1} className={classes.messagesContainer}>
+        <ul style={{listStyleType: "none", padding: 0}}>
+          {messages.map((message, i) => (
+            <li
+              key={i}
+              className={clsx(classes.messageItem,
+                message.ownedByCurrentUser ? classes.myMessage : classes.receivedMessage
+              )}
+            >
+              {message.body}
+            </li>
+          ))}
+        </ul>
+      </Box>
+      <Box>
         <textarea
           value={newMessage}
           onChange={handleNewMessageChange}
           placeholder="Write message..."
           className= {classes.newMessageInputField}
         />
-        </Grid>
-        <Grid container item xs={1}>
-          <button onClick={handleSendMessage} className= {classes.sendMessageButton}>
-            Send
-          </button>
-        </Grid>
-      </Grid>
+      </Box>
+      <Box>
+        <button onClick={handleSendMessage} className= {classes.sendMessageButton}>
+          Send
+        </button>
+      </Box>
     </Box>
   );
 };
