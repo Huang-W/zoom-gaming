@@ -86,8 +86,7 @@ const Room = (props) => {
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
-    const { id, gameID } = useParams();
-    const roomID = id;
+    const { roomID, gameID } = useParams();
 
     useEffect(() => {
         socketRef.current = io.connect("/");
