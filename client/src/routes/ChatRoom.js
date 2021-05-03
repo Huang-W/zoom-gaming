@@ -71,9 +71,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ChatRoom = (props) => {
-  const { id } = useParams(); // Gets roomId from URL
-  const roomId = id;
-  const { messages, sendMessage } = useChat(roomId); // Creates a websocket and manages messaging
+  const { roomID } = useParams(); // Gets roomID from URL
+  const { messages, sendMessage } = useChat(roomID); // Creates a websocket and manages messaging
   const [newMessage, setNewMessage] = React.useState(""); // Message to be sent
   const classes = useStyles();
 
