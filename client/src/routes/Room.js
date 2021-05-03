@@ -63,7 +63,19 @@ const useStyles = makeStyles((theme) => ({
     },
     gameFont: {
         fontFamily: "'Press Start 2P', cursive",
-    }
+    },
+    chatDialog: {
+        display: "flex",
+        justifyContent: "center",
+        width: "50vw",
+        height: "60vw",
+        // "& .MuiPaper-root": {
+        //     backgroundColor: "white",
+        //     border: "solid 5px white",
+        //     borderRadius: 0,
+        //     fontFamily: "'Press Start 2P', cursive",
+        // },
+    },
 }));
 
 const Room = (props) => {
@@ -232,7 +244,7 @@ const Room = (props) => {
                     open={openChat}
                     keepMounted
                     onClose={handleCloseChat}
-                    style={{width: "100px"}}
+                    className={classes.chatDialog}
                     aria-labelledby="alert-dialog-slide-title"
                     aria-describedby="alert-dialog-slide-description"
                   >
