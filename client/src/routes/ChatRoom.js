@@ -88,7 +88,7 @@ const ChatRoom = (props) => {
   return (
     <Box className={classes.chatRoomContainer} flexDirection={"column"}>
       <Box flexGrow={1} className={classes.messagesContainer}>
-        <ul style={{listStyleType: "none", padding: 0}}>
+        <ul style={{listStyleType: "none", padding: 0, width: "100%"}}>
           {messages.map((message, i) => (
             <li
               key={i}
