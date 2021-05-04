@@ -32,7 +32,6 @@ const useStyles = makeStyles((theme) => ({
         color: "white",
         fontSize: "20px",
         fontFamily: "'Press Start 2P', cursive",
-        marginLeft: "20px",
         padding: "20px",
         border: "dashed 5px white",
         height: "50px",
@@ -78,6 +77,7 @@ const useStyles = makeStyles((theme) => ({
     typography: {
         color: "white",
         marginTop: "8px",
+        marginRight: "20px",
         "& label.Mui-focused": {
             color: "white",
         },
@@ -115,9 +115,10 @@ const CreateRoom = (props) => {
 
     const classes = useStyles();
     const [roomID, updateRoomID] = useState("");
+    const [code, updateCode] = useState("")
     const createParty = (gameID) => {
         const id = randomize('A0', 6, {exclude: "0oO"});
-        props.history.push(`/${id}/${gameID}`);
+        updateCode(`${id}/${gameID}`);
     }
 
     const joinParty = () => {
@@ -157,13 +158,31 @@ const CreateRoom = (props) => {
                   aria-labelledby="alert-dialog-slide-title"
                   aria-describedby="alert-dialog-slide-description"
                 >
-                    <DialogContent className={classes.centerAlign}>
-                        <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}>
-                            BRO FORCE
-                        </Button>
-                        <Button className={classes.buttonGameSpacetime} onClick={() => createParty("SpaceTime")}>
-                            SPACE TIME
-                        </Button>
+                    <DialogContent className={classes.centerAlign} style={{paddingBottom: "30px"}}>
+                        <Grid container>
+                            <Grid container item xs={6}>
+                                <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}>
+                                    BRO FORCE
+                                </Button>
+                            </Grid>
+                            <Grid container item xs={6}>
+                                <Button className={classes.buttonGameSpacetime} onClick={() => createParty("SpaceTime")}>
+                                    SPACE TIME
+                                </Button>
+                            </Grid>
+                            {code && <Grid container item xs={12}>
+                                <Grid container item xs={12} className={classes.centerAlign}>
+                                    <Button className={classes.buttonGame} onClick={() => navigator.clipboard.writeText(code)}>
+                                        COPY CODE
+                                    </Button>
+                                </Grid>
+                                <Grid container item xs={12} className={classes.centerAlign}>
+                                    <Button className={classes.buttonGame} onClick={() => props.history.push(`/${code}`)}>
+                                        START
+                                    </Button>
+                                </Grid>
+                            </Grid>}
+                        </Grid>
                     </DialogContent>
                 </Dialog>
                 <Button className={classes.button} onClick={handleClickOpenJoin}>

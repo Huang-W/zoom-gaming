@@ -15,7 +15,7 @@ import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
 import ChatRoom from "./ChatRoom";
 import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
+import _ from "lodash";
 import {Transition} from "./CreateRoom";
 
 const Video = (props) => {
@@ -120,7 +120,8 @@ const Room = (props) => {
                     peer,
                 }
 
-                setPeers(users => [...users, peerObj]);
+                setPeers([...peers, peerObj]);
+                console.log("user left", peers)
             });
 
             socketRef.current.on("receiving returned signal", payload => {
@@ -136,8 +137,21 @@ const Room = (props) => {
                 const peers = peersRef.current.filter(p => p.peerID !== id);
                 peersRef.current = peers;
                 setPeers(peers);
+                console.log("user left", peers)
             })
         })
+
+        return () => {
+
+            const stream = userVideo.current.srcObject;
+            const tracks = stream.getTracks();
+
+            tracks.forEach(function(track) {
+                track.stop();
+            });
+
+            userVideo.current.srcObject = null;
+        }
     }, []);
 
     function createPeer(userToSignal, callerID, stream) {
@@ -223,7 +237,7 @@ const Room = (props) => {
               </Grid>
               <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                   <StyledVideo muted ref={userVideo} autoPlay playsInline />
-                  {peers.map((peer) => {
+                  {_.uniqBy(peers, 'peerID').map((peer) => {
                       return (
                         <Video key={peer.peerID} peer={peer.peer} />
                       );
