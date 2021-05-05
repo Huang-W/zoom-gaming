@@ -1,5 +1,4 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { createStore, compose, applyMiddleware } from 'redux'
 import thunk from 'redux-thunk'
 import { Provider } from 'react-redux'
@@ -8,9 +7,9 @@ import { reduxFirestore, getFirestore, createFirestoreInstance } from 'redux-fir
 import { ReactReduxFirebaseProvider, getFirebase } from 'react-redux-firebase'
 import firebase from 'firebase/app'
 import fbConfig from './utils/fbConfig'
-import rootReducer from 'store/reducers/rootReducer'
+import rootReducer from './store/reducers/rootReducer.js'
 import { ThemeProvider } from 'styled-components'
-import App from 'App'
+import App from './App.js'
 import GlobalStyle from './global-design/globalStyles'
 import theme from './global-design/theme'
 
@@ -29,19 +28,19 @@ const rrfProps = {
 	sessions: 'sessions',
 }
 
-ReactDOM.render(
-	<React.StrictMode>
-		<Provider store={store}>
-			<ReactReduxFirebaseProvider {...rrfProps}>
-				<ThemeProvider theme={theme}>
-					<GlobalStyle />
-					<App />
-				</ThemeProvider>
-			</ReactReduxFirebaseProvider>
-		</Provider>
-	</React.StrictMode>,
-	document.getElementById('root')
-)
+const TabooGame = () => {
+	return (
+			<Provider store={store}>
+				<ReactReduxFirebaseProvider {...rrfProps}>
+					<ThemeProvider theme={theme}>
+						<GlobalStyle />
+						<App />
+					</ThemeProvider>
+				</ReactReduxFirebaseProvider>
+			</Provider>
+			)
+};
+export default TabooGame;
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

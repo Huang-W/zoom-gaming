@@ -6,7 +6,8 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import Slide from '@material-ui/core/Slide';
 import broforce from "../assets/broforce.jpeg"
-import spacetime from "../assets/spacetime.jpg"
+import spacetime from "../assets/spacetime.jpeg"
+import taboo from "../assets/taboo.jpeg"
 
 const useStyles = makeStyles((theme) => ({
     centerAlign: {
@@ -45,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
         padding: "50px",
         border: "dashed 5px white",
         height: "100px",
-        width: "2000px",
+        width: "180px",
         borderRadius: 0,
         backgroundImage: `url(${broforce})`,
         backgroundSize:"contain",
@@ -58,9 +59,22 @@ const useStyles = makeStyles((theme) => ({
         padding: "50px",
         border: "dashed 5px white",
         height: "100px",
-        width: "2000px",
+        width: "180px",
         borderRadius: 0,
         backgroundImage: `url(${spacetime})`,
+        backgroundSize:"contain",
+    },
+    buttonGameTaboo: {
+        color: "white",
+        fontSize: "20px",
+        fontFamily: "'Press Start 2P', cursive",
+        margin: "50px",
+        padding: "50px",
+        border: "dashed 5px white",
+        height: "100px",
+        width: "180px",
+        borderRadius: 0,
+        backgroundImage: `url(${taboo})`,
         backgroundSize:"contain",
     },
     gameFont: {
@@ -154,21 +168,21 @@ const CreateRoom = (props) => {
                   TransitionComponent={Transition}
                   className={classes.mobileDialog}
                   keepMounted
+                  maxWidth={"md"}
                   onClose={handleCloseCreate}
                   aria-labelledby="alert-dialog-slide-title"
                   aria-describedby="alert-dialog-slide-description"
                 >
                     <DialogContent className={classes.centerAlign} style={{paddingBottom: "30px"}}>
                         <Grid container>
-                            <Grid container item xs={6}>
-                                <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}>
-                                    BRO FORCE
-                                </Button>
+                            <Grid container item xs={4} className={classes.centerAlign}>
+                                <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}/>
                             </Grid>
-                            <Grid container item xs={6}>
-                                <Button className={classes.buttonGameSpacetime} onClick={() => createParty("SpaceTime")}>
-                                    SPACE TIME
-                                </Button>
+                            <Grid container item xs={4} className={classes.centerAlign}>
+                                <Button className={classes.buttonGameSpacetime} onClick={() => createParty("SpaceTime")}/>
+                            </Grid>
+                            <Grid container item xs={4} className={classes.centerAlign}>
+                                <Button className={classes.buttonGameTaboo} onClick={() => createParty("Taboo")}/>
                             </Grid>
                             {code && <Grid container item xs={12}>
                                 <Grid container item xs={12} className={classes.centerAlign}>

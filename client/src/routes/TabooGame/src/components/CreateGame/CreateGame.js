@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 import { Redirect } from 'react-router-dom'
 import { connect } from 'react-redux'
 import randomize from 'randomatic'
-import { ButtonTabooCard } from 'components/shared/TabooCard'
-import CreateGameForm from 'components/CreateGameForm'
-import Pending from 'components/shared/Pending'
-import {ErrorMessage} from 'components/shared/FeedbackMessage'
-import { createNewGame } from 'store/actions/gameActions'
-import { clearErrors } from 'store/actions/errorActions'
+import { ButtonTabooCard } from '../shared/TabooCard'
+import CreateGameForm from '../CreateGameForm'
+import Pending from '../shared/Pending'
+import {ErrorMessage} from '../shared/FeedbackMessage'
+import { createNewGame } from '../../store/actions/gameActions'
+import { clearErrors } from '../../store/actions/errorActions'
 
 export class CreateGame extends React.Component {
 	constructor(props) {
@@ -99,7 +99,7 @@ export class CreateGame extends React.Component {
 			},
 		]
 		return this.state.redirect ? (
-			<Redirect to={`/waiting/${this.props.gamecode}`} />
+			<Redirect to={`${this.props.location.pathname}/waiting/${this.props.gamecode}`} />
 		) : (
 			<ButtonTabooCard tabooWord="New Game" buttons={buttonInfo}>
 				<CreateGameForm initialValues={this.state} handleSubmit={this.handleSubmit} />

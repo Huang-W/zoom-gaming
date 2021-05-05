@@ -17,6 +17,7 @@ import ChatRoom from "./ChatRoom";
 import Dialog from '@material-ui/core/Dialog';
 import _ from "lodash";
 import {Transition} from "./CreateRoom";
+import TabooGame from "./TabooGame/src/TabooGame";
 
 const Video = (props) => {
     const ref = useRef();
@@ -211,6 +212,9 @@ const Room = (props) => {
                       <ButtonBase onClick={() => props.history.push(`/`)}>
                           <img src={Remote} style={{height: "60px"}}/>
                       </ButtonBase>
+                      <Button className={classes.button} onClick={() => navigator.clipboard.writeText(`${roomID}/${gameID}`)}>
+                          COPY ROOM ID
+                      </Button>
                   </Box>
                   <Button className={classes.button} onClick={() => props.history.push(`/`)}>
                       START NEW GAME
@@ -233,7 +237,7 @@ const Room = (props) => {
           </AppBar>
           <Grid container style={{height: "calc(100% - 64px)"}}>
               <Grid item xs={10} className={classes.centerAlign}>
-                  <GameLovers roomId={roomID} gameId={gameID}/>
+                  {gameID === "Taboo" ?<TabooGame /> : <GameLovers roomId={roomID} gameId={gameID}/>}
               </Grid>
               <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
                   <StyledVideo muted ref={userVideo} autoPlay playsInline />

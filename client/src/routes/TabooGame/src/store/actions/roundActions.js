@@ -1,4 +1,4 @@
-import { dbUpdateRoundStatus, dbUpdateCardStatus, dbCompleteRound } from 'utils/API'
+import { dbUpdateRoundStatus, dbUpdateCardStatus, dbCompleteRound } from '../../utils/API'
 import { errorActionCreator } from './errorActions'
 
 const requestRoundStatus = () => {

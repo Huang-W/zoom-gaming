@@ -2,11 +2,11 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import moment from 'moment'
-import TimeCard from 'components/TimeCard'
-import LoadingCard from 'components/shared/LoadingCard'
-import { ErrorCard } from 'components/shared/ErrorCard'
-import { GameCard } from 'components/GameCard'
-import { changeCardStatus } from 'store/actions/cardActions'
+import TimeCard from '../TimeCard'
+import LoadingCard from '../shared/LoadingCard'
+import { ErrorCard } from '../shared/ErrorCard'
+import { GameCard } from '../GameCard'
+import { changeCardStatus } from '../../store/actions/cardActions'
 
 // export const InRound = ({ roundEndTime, endRound, role, error, ...props }) => {
 export class InRound extends React.Component {

@@ -9,14 +9,15 @@ import Submit from '../../components/Submit'
 
 //return one of series of routes based on current home path
 export default function Home({ match }) {
-	const { path } = match
+	const { url } = match
+
 	return (
 			<Switch>
-				<Route path={path} exact component={MainMenu} />
-				<Route path={`${path}/create`} component={CreateGame} />
-				<Route path={`${path}/join`} component={JoinGame} />
-				<Route path={`${path}/rules`} component={Rules} />
-				<Route path={`${path}/submit`} component={Submit} />
+				<Route path={url} exact component={MainMenu} />
+				<Route path={`${url}/create`} component={CreateGame} />
+				<Route path={`${url}/join`} component={JoinGame} />
+				<Route path={`${url}/rules`} component={Rules} />
+				<Route path={`${url}/submit`} component={Submit} />
 			</Switch>
 	)
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Formik, Field, ErrorMessage } from 'formik'
-import { Form, FormSection, FormSectionTitle, TextInput, TextLabel, ErrorText } from 'components/shared/FormElements'
+import { Form, FormSection, FormSectionTitle, TextInput, TextLabel, ErrorText } from '../shared/FormElements'
 
 //Validation occurs onChange or onBlur of inputs and onSubmit of form
 const validate = (values) => {

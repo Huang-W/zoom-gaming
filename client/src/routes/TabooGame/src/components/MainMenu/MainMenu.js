@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { TabooCard } from 'components/shared/TabooCard'
-import TextLink from 'components/shared/TextLink'
+import { TabooCard } from '../shared/TabooCard'
+import TextLink from '../shared/TextLink'
 
 
 const MainMenu = ({ match }) => {

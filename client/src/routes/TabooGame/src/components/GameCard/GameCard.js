@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { ButtonTabooCard, TabooCard } from 'components/shared/TabooCard'
-import InstructionsText from 'components/shared/InstructionsText'
-import KeyWord from 'components/shared/KeyWord'
-import { ErrorMessage } from 'components/shared/FeedbackMessage'
+import { ButtonTabooCard, TabooCard } from '../shared/TabooCard'
+import InstructionsText from '../shared/InstructionsText'
+import KeyWord from '../shared/KeyWord'
+import { ErrorMessage } from '../shared/FeedbackMessage'
 
 export const GiverGameCard = ({ currentCard, changeCardStatus, isPending, error, cardsRemainingMsg }) => {
 	const buttonInfo = [

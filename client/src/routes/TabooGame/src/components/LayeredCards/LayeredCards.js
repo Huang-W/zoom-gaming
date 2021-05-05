@@ -1,4 +1,4 @@
-import { LayeredTabooCard } from 'components/shared/TabooCard'
+import { LayeredTabooCard } from '../shared/TabooCard'
 import React from 'react'
 
 const LayeredCards = () => {

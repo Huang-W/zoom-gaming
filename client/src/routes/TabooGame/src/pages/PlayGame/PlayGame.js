@@ -5,10 +5,10 @@ import { Redirect } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { firestoreConnect } from 'react-redux-firebase'
 import { compose } from 'redux'
-import { fetchGameDeck } from 'store/actions/gameActions'
-import Round from 'components/Round'
-import LoadingCard from 'components/shared/LoadingCard'
-import { ButtonErrorCard, ErrorCard } from 'components/shared/ErrorCard'
+import { fetchGameDeck } from '../../store/actions/gameActions'
+import Round from '../../components/Round'
+import LoadingCard from '../../components/shared/LoadingCard'
+import { ButtonErrorCard, ErrorCard } from '../../components/shared/ErrorCard'
 
 export class PlayGame extends React.Component {
 	constructor(props) {

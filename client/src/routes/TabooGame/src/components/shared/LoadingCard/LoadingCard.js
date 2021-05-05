@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { TabooCardTop } from 'components/shared/TabooCard'
-import Pending from 'components/shared/Pending'
+import { TabooCardTop } from '../TabooCard'
+import Pending from '../Pending'
 import { StyledLoadingCard } from './style'
 
 const LoadingCard = ({ message }) => {

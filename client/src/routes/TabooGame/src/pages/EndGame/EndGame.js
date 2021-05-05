@@ -4,11 +4,11 @@ import { Redirect } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { firestoreConnect } from 'react-redux-firebase'
 import { compose } from 'redux'
-import PlayerListCard from 'components/PlayerListCard'
-import { FilteredTabooList } from 'components/shared/TabooCard'
-import ScoreCard from 'components/ScoreCard'
-import LoadingCard from 'components/shared/LoadingCard'
-import { ButtonErrorCard } from 'components/shared/ErrorCard'
+import PlayerListCard from '../../components/PlayerListCard'
+import { FilteredTabooList } from '../../components/shared/TabooCard'
+import ScoreCard from '../../components/ScoreCard'
+import LoadingCard from '../../components/shared/LoadingCard'
+import { ButtonErrorCard } from '../../components/shared/ErrorCard'
 
 export class EndGame extends React.Component {
 	constructor(props) {

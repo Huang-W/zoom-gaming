@@ -1,7 +1,7 @@
 import React from 'react'
 import { Redirect } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { ButtonTabooCard } from 'components/shared/TabooCard'
+import { ButtonTabooCard } from '../shared/TabooCard'
 import rules from './rulesText'
 import { RulesTitle, RulesText } from './style'
 

@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from "prop-types"
-import Rules from 'components/Rules'
-import PlayerListCard from 'components/PlayerListCard'
-import { FilteredTabooList } from 'components/shared/TabooCard'
-import { Button } from 'components/shared/Button'
+import Rules from '../Rules'
+import PlayerListCard from '../PlayerListCard'
+import { FilteredTabooList } from '../shared/TabooCard'
+import { Button } from '../shared/Button'
 import { StyledGameInfo } from './style'
 
 //Displays a link for Show Rules and Show Teams. On click, displays a TabooCard with Rules/Team 

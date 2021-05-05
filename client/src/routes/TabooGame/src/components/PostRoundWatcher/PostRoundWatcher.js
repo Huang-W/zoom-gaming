@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import InstructionsText from 'components/shared/InstructionsText'
-import CardsPlayed from 'components/CardsPlayed'
-import { LargeButton } from 'components/shared/Button'
-import Pending from 'components/shared/Pending'
-import { ErrorMessage } from 'components/shared/FeedbackMessage'
-import KeyWord from 'components/shared/KeyWord'
+import InstructionsText from '../shared/InstructionsText'
+import CardsPlayed from '../CardsPlayed'
+import { LargeButton } from '../shared/Button'
+import Pending from '../shared/Pending'
+import { ErrorMessage } from '../shared/FeedbackMessage'
+import KeyWord from '../shared/KeyWord'
 
 //Used for each of 3 status types to create buttons to change card status to the other 2 statuses
 export const generateCardsPlayedButtonInfo = (statusArray, status, statusSelected, cb, isPending) => {

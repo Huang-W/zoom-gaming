@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { ButtonTabooCard, TabooCard } from 'components/shared/TabooCard'
+import { ButtonTabooCard, TabooCard } from '../shared/TabooCard'
 
 const PlayerListCard = ({ buttonInfo, tabooWord, children }) => {
 	return buttonInfo ? (

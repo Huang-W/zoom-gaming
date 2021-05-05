@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import SubmitCardForm from 'components/SubmitCardForm'
-import { ButtonTabooCard } from 'components/shared/TabooCard'
-import InstructionsText from 'components/shared/InstructionsText'
-import Pending from 'components/shared/Pending'
-import { ErrorMessage, SuccessMessage } from 'components/shared/FeedbackMessage'
-import { submitCardIdea } from 'store/actions/cardActions'
+import SubmitCardForm from '../SubmitCardForm'
+import { ButtonTabooCard } from '../shared/TabooCard'
+import InstructionsText from '../shared/InstructionsText'
+import Pending from '../shared/Pending'
+import { ErrorMessage, SuccessMessage } from '../shared/FeedbackMessage'
+import { submitCardIdea } from '../../store/actions/cardActions'
 
 export class Submit extends React.Component {
 	constructor(props) {

@@ -1,11 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import RoundInstructionsCard from 'components/RoundInstructionsCard'
-import ScoreCard from 'components/ScoreCard'
-import { TabooCard } from 'components/shared/TabooCard'
-import InstructionsText from 'components/shared/InstructionsText'
-import Pending from 'components/shared/Pending'
-import { generateSkipText, generateEndGameText } from 'utils/helpers'
+import RoundInstructionsCard from '../RoundInstructionsCard'
+import ScoreCard from '../ScoreCard'
+import { TabooCard } from '../shared/TabooCard'
+import InstructionsText from '../shared/InstructionsText'
+import Pending from '../shared/Pending'
+import { generateSkipText, generateEndGameText } from '../../utils/helpers'
 
 class PreRound extends React.Component {
 	constructor(props) {

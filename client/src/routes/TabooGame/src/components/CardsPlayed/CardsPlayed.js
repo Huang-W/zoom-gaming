@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { ButtonTabooCard } from 'components/shared/TabooCard'
-import RadioListItem from 'components/RadioListItem'
-import List from 'components/shared/List'
+import { ButtonTabooCard } from '../shared/TabooCard'
+import RadioListItem from '../RadioListItem'
+import List from '../shared/List'
 import { NoCardMessage } from './style'
 
 //Returns a Taboo card with buttons to change card status to other two options or a card stating there are no cards in this status

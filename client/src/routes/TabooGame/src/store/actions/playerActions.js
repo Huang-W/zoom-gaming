@@ -1,4 +1,4 @@
-import { dbUpdateTeam } from 'utils/API'
+import { dbUpdateTeam } from '../../utils/API'
 import { errorActionCreator } from './errorActions'
 
 const requestTeamUpdate = () => {

@@ -6,8 +6,8 @@ import {
 	dbUpdateGameStatus,
 	dbRequestGameDeck,
 	dbSaveGameDeck,
-} from 'utils/API'
-import { shuffleArray, convertArrayToObject } from 'utils/helpers'
+} from '../../utils/API'
+import { shuffleArray, convertArrayToObject } from '../../utils/helpers'
 import { errorActionCreator } from './errorActions'
 
 const requestCreateGame = () => {

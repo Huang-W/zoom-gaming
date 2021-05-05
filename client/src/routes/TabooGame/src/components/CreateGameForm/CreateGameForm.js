@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Formik, Field, ErrorMessage } from 'formik'
 // import { ErrorMessage as CustomErrorText } from 'components/shared/FeedbackMessage'
-import HideContainer from 'components/shared/HideContainer'
+import HideContainer from '../shared/HideContainer'
 import {
 	Form,
 	FormSection,
@@ -14,7 +14,7 @@ import {
 	Label,
 	TextLabel,
 	ErrorText,
-} from 'components/shared/FormElements'
+} from '../shared/FormElements'
 
 //Validation occurs onChange or onBlur of inputs and onSubmit of form
 const validate = (values) => {

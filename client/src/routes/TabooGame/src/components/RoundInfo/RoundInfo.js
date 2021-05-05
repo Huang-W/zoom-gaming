@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { StyledRoundInfo, RoundNumber, Role } from './style'
-import Star from 'components/shared/Star'
+import Star from '../shared/Star'
 
 const RoundInfo = ({ round, giver, watcher, currentPlayerId }) => {
 	return (

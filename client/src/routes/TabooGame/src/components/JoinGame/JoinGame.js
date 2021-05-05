@@ -2,12 +2,12 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Redirect } from 'react-router-dom'
 import { connect } from 'react-redux'
-import { ButtonTabooCard } from 'components/shared/TabooCard'
-import JoinGameForm from 'components/JoinGameForm'
-import Pending from 'components/shared/Pending'
-import {ErrorMessage} from 'components/shared/FeedbackMessage'
-import { joinNewGame } from 'store/actions/gameActions'
-import { clearErrors } from 'store/actions/errorActions'
+import { ButtonTabooCard } from '../shared/TabooCard'
+import JoinGameForm from '../JoinGameForm'
+import Pending from '../shared/Pending'
+import {ErrorMessage} from '../shared/FeedbackMessage'
+import { joinNewGame } from '../../store/actions/gameActions'
+import { clearErrors } from '../../store/actions/errorActions'
 
 export class JoinGame extends React.Component {
 	constructor(props) {

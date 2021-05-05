@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { TabooCard, ButtonTabooCard } from 'components/shared/TabooCard'
-import  InstructionsText  from 'components/shared/InstructionsText'
-import  KeyWord  from 'components/shared/KeyWord'
+import { TabooCard, ButtonTabooCard } from '../shared/TabooCard'
+import  InstructionsText  from '../shared/InstructionsText'
+import  KeyWord  from '../shared/KeyWord'
 
 //Depending on role of current users, returns a TabooCard with different set of instructions and button
 //to start the round

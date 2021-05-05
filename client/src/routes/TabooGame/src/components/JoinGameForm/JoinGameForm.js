@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Formik, Field, ErrorMessage } from 'formik'
-import { Form, FormSection, TextInput, TextLabel, ErrorText } from 'components/shared/FormElements'
+import { Form, FormSection, TextInput, TextLabel, ErrorText } from '../shared/FormElements'
 
 const validate = (values) => {
 	const errors = {}

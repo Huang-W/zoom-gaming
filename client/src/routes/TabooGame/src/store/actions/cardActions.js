@@ -1,5 +1,5 @@
 import { errorActionCreator } from './errorActions'
-import { dbUpdateCardStatus, dbSubmitCardIdea } from 'utils/API'
+import { dbUpdateCardStatus, dbSubmitCardIdea } from '../../utils/API'
 
 const requestUpdateCardStatus = () => {
 	return {

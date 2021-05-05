@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import GameInfo from 'components/GameInfo'
-import RoundInfo from 'components/RoundInfo'
-import PreRound from 'components/PreRound'
-import InRound from 'components/InRound'
-import PostRound from 'components/PostRound'
-import { updateRoundStatus } from 'store/actions/roundActions'
+import GameInfo from '../GameInfo'
+import RoundInfo from '../RoundInfo'
+import PreRound from '../PreRound'
+import InRound from '../InRound'
+import PostRound from '../PostRound'
+import { updateRoundStatus } from '../../store/actions/roundActions'
 
 export class Round extends React.Component {
 	//Receives either 'giver' or 'watcher. Based on half (top = team 1, bottom = team 2) and the teamTurn index, returns

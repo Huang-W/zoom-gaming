@@ -9,10 +9,10 @@ import {
 	StyledListItemSecondary,
 	StyledListTitle,
 } from './style'
-import List from 'components/shared/List'
-import ButtonContainer from 'components/ButtonContainer'
-import Star from 'components/shared/Star'
-import {ErrorMessage} from 'components/shared/FeedbackMessage'
+import List from '../List'
+import ButtonContainer from '../../ButtonContainer'
+import Star from '../Star'
+import {ErrorMessage} from '../FeedbackMessage'
 
 //Primary TabooCard component used for main menu and game
 export const TabooCard = ({ tabooWord, list, children }) => {

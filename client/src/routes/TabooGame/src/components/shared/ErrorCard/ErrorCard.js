@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from "prop-types"
 import { StyledErrorCard } from './style'
-import {ErrorMessage} from 'components/shared/FeedbackMessage'
-import { ButtonTabooCard, TabooCard } from 'components/shared/TabooCard'
+import {ErrorMessage} from '../FeedbackMessage'
+import { ButtonTabooCard, TabooCard } from '../TabooCard'
 import { withRouter } from 'react-router-dom'
 
 export const ErrorCard = ({error, title}) => {

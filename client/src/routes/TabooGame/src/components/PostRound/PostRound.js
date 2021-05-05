@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import PostRoundNonWatcher from 'components/PostRoundNonWatcher'
-import PostRoundWatcher from 'components/PostRoundWatcher'
-import { FilteredTabooList } from 'components/shared/TabooCard'
+import PostRoundNonWatcher from '../PostRoundNonWatcher'
+import PostRoundWatcher from '../PostRoundWatcher'
+import { FilteredTabooList } from '../shared/TabooCard'
 import { StyledPostRound } from './style'
-import { completeRound } from 'store/actions/roundActions'
-import { changeCardStatus } from 'store/actions/cardActions'
+import { completeRound } from '../../store/actions/roundActions'
+import { changeCardStatus } from '../../store/actions/cardActions'
 
 export class PostRound extends React.Component {
 	constructor(props) {
