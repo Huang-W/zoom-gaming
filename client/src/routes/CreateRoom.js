@@ -8,8 +8,9 @@ import Slide from '@material-ui/core/Slide';
 import broforce from "../assets/broforce.jpeg"
 import spacetime from "../assets/spacetime.jpeg"
 import taboo from "../assets/taboo.jpeg"
+import wheels from "../assets/wheels.png"
 
-const useStyles = makeStyles((theme) => ({
+export const useStyles = makeStyles((theme) => ({
     centerAlign: {
         display: "flex",
         alignItems: "center",
@@ -38,15 +39,24 @@ const useStyles = makeStyles((theme) => ({
         height: "50px",
         borderRadius: 0,
     },
+    boxControls: {
+        color: "white",
+        fontSize: "20px",
+        fontFamily: "'Press Start 2P', cursive",
+        padding: "20px",
+        border: "dashed 5px white",
+        height: "40px",
+        borderRadius: 0,
+    },
     buttonGameBroforce: {
         color: "white",
         fontSize: "20px",
         fontFamily: "'Press Start 2P', cursive",
-        margin: "50px",
+        margin: "20px",
         padding: "50px",
         border: "dashed 5px white",
-        height: "100px",
-        width: "180px",
+        height: "145px",
+        width: "250px",
         borderRadius: 0,
         backgroundImage: `url(${broforce})`,
         backgroundSize:"contain",
@@ -55,11 +65,11 @@ const useStyles = makeStyles((theme) => ({
         color: "white",
         fontSize: "20px",
         fontFamily: "'Press Start 2P', cursive",
-        margin: "50px",
+        margin: "20px",
         padding: "50px",
         border: "dashed 5px white",
-        height: "100px",
-        width: "180px",
+        height: "145px",
+        width: "250px",
         borderRadius: 0,
         backgroundImage: `url(${spacetime})`,
         backgroundSize:"contain",
@@ -68,27 +78,46 @@ const useStyles = makeStyles((theme) => ({
         color: "white",
         fontSize: "20px",
         fontFamily: "'Press Start 2P', cursive",
-        margin: "50px",
+        margin: "20px",
         padding: "50px",
         border: "dashed 5px white",
-        height: "100px",
-        width: "180px",
+        height: "145px",
+        width: "250px",
         borderRadius: 0,
         backgroundImage: `url(${taboo})`,
         backgroundSize:"contain",
+    },
+    buttonGameWheels: {
+        color: "white",
+        fontSize: "20px",
+        fontFamily: "'Press Start 2P', cursive",
+        margin: "20px",
+        padding: "50px",
+        border: "dashed 5px white",
+        height: "145px",
+        width: "250px",
+        borderRadius: 0,
+        backgroundImage: `url(${wheels})`,
+        backgroundSize:"contain",
+    },
+    typography: {
+        fontFamily: "'Press Start 2P', cursive",
+        color: "white",
+        fontSize: "20px",
     },
     gameFont: {
         fontFamily: "'Press Start 2P', cursive",
     },
     mobileDialog: {
         "& .MuiPaper-root": {
+            width: "700px",
             backgroundColor: "black",
             border: "solid 5px white",
             borderRadius: 0,
             fontFamily: "'Press Start 2P', cursive",
         },
     },
-    typography: {
+    textField: {
         color: "white",
         marginTop: "8px",
         marginRight: "20px",
@@ -175,14 +204,17 @@ const CreateRoom = (props) => {
                 >
                     <DialogContent className={classes.centerAlign} style={{paddingBottom: "30px"}}>
                         <Grid container>
-                            <Grid container item xs={4} className={classes.centerAlign}>
-                                <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}/>
-                            </Grid>
-                            <Grid container item xs={4} className={classes.centerAlign}>
+                            <Grid container item xs={6} className={classes.centerAlign}>
                                 <Button className={classes.buttonGameSpacetime} onClick={() => createParty("SpaceTime")}/>
                             </Grid>
-                            <Grid container item xs={4} className={classes.centerAlign}>
+                            <Grid container item xs={6} className={classes.centerAlign}>
+                                <Button className={classes.buttonGameBroforce} onClick={() => createParty("Broforce")}/>
+                            </Grid>
+                            <Grid container item xs={6} className={classes.centerAlign}>
                                 <Button className={classes.buttonGameTaboo} onClick={() => createParty("Taboo")}/>
+                            </Grid>
+                            <Grid container item xs={6} className={classes.centerAlign}>
+                                <Button className={classes.buttonGameWheels} onClick={() => createParty("WackyWheels")}/>
                             </Grid>
                             {code && <Grid container item xs={12}>
                                 <Grid container item xs={12} className={classes.centerAlign}>
@@ -212,7 +244,7 @@ const CreateRoom = (props) => {
                   aria-describedby="alert-dialog-slide-description"
                 >
                     <DialogContent className={classes.centerAlign} style={{margin: "20px"}}>
-                        <TextField label="Room ID" variant="outlined" className={classes.typography} value={roomID} onChange={(e) => updateRoomID(e.target.value)}/>
+                        <TextField label="Room ID" variant="outlined" className={classes.textField} value={roomID} onChange={(e) => updateRoomID(e.target.value)}/>
                         <Button className={classes.buttonGame} onClick={joinParty}>
                             JOIN
                         </Button>

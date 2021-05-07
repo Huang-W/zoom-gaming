@@ -4,6 +4,10 @@ import { InputMap } from "./input";
 import Button from "@material-ui/core/Button";
 import {gamecode} from "../TabooGame/src/__fixtures__/game";
 import {useHistory} from "react-router";
+import DialogContent from "@material-ui/core/DialogContent";
+import {DialogActions, Grid, TextField, Typography} from "@material-ui/core";
+import Dialog from "@material-ui/core/Dialog";
+import {Transition, useStyles} from "../CreateRoom";
 const pb = require('./proto/signaling_pb');
 const input = require('./proto/input_pb');
 
@@ -12,9 +16,20 @@ const SERVER_ADDR = "w2.zoomgaming.app";
 
 const GameLovers = (props) => {
 
+  const classes = useStyles();
   const history = useHistory();
 
-  const [failed, updateFailed] = useState(true);
+  const [failed, updateFailed] = useState(false);
+
+  const [open, setOpen] = React.useState(true);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
  useEffect(() => {
    let peerConnection = null; // webrtc connection
@@ -23,7 +38,7 @@ const GameLovers = (props) => {
    webSocket.binaryType = "arraybuffer" // blob or arraybuffer
    // webSocket.addEventListener("open", event => { console.log("ws open"); });
    webSocket.addEventListener("message", event => { handleWebsocketEvent(event); });
-   webSocket.addEventListener("close", event => { console.log("ws closing") });
+   webSocket.addEventListener("close", event => { console.log("ws closing"); updateFailed(true) });
    webSocket.onerror = function(event) { console.error("WebSocket error observed:", event); };
 
    let startSession = (offer) => {
@@ -123,7 +138,7 @@ const GameLovers = (props) => {
        return createOffer(pc);
      }).then(offer => {
        startSession(offer);
-       updateFailed(true);
+       updateFailed(false);
      }).then(() => pc);
    }
 
@@ -156,7 +171,37 @@ const GameLovers = (props) => {
    }
  }, [props.gameId])
 
-  return failed ? (
+  const getControls = (gameId) => {
+   switch (gameId) {
+     case ("SpaceTime"):
+       return [
+         {action: "Move Up", control: "Up Arrow"},
+         {action: "Move Down", control: "Down Arrow"},
+         {action: "Move Left", control: "Left Arrow"},
+         {action: "Move Right", control: "Right Arrow"},
+         {action: "Jump", control: "Space"},
+         {action: "Fire/Use", control: "D"},
+         {action: "Back/Cancel", control: "S"},
+         {action: "Space-Set", control: "A"},
+       ]
+     default:
+       return [
+         {action: "Move Up", control: "Up Arrow"},
+         {action: "Move Down", control: "Down Arrow"},
+         {action: "Move Left", control: "Left Arrow"},
+         {action: "Move Right", control: "Right Arrow"},
+         {action: "Jump", control: "Up Arrow"},
+         {action: "Fire", control: "D"},
+         {action: "Grenade", control: "A"},
+         {action: "Melle", control: "S"},
+         {action: "Flex", control: "Space"},
+       ]
+   }
+  }
+
+
+  return failed ?
+    (
     <div style={{
       border: "dashed 5px white",
       fontFamily: "'Press Start 2P', cursive",
@@ -197,7 +242,50 @@ const GameLovers = (props) => {
     </div>
     ) :
     (
-    <video id="remote-video" autoPlay muted playsInline style={{width: "100%", height: "100%"}}></video>
+      <>
+        <video id="remote-video" autoPlay muted playsInline style={{width: "100%", height: "100%"}}></video>
+        <Dialog
+          open={open}
+          TransitionComponent={Transition}
+          className={classes.mobileDialog}
+          keepMounted
+          onClose={handleClose}
+          aria-labelledby="alert-dialog-slide-title"
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogContent className={classes.centerAlign} style={{margin: "20px"}}>
+            <Grid container>
+              <Grid container item xs={12} style={{paddingBottom: "20px"}}>
+                <Grid container xs={6}>
+                  <Typography className={classes.typography}>Action:</Typography>
+                </Grid>
+                <Grid container xs={6}>
+                  <Typography className={classes.typography}>Control:</Typography>
+                </Grid>
+              </Grid>
+              {getControls(props.gameId).map(control => (
+                <Grid container item xs={12}>
+                  <Grid container xs={6}>
+                    <Typography className={classes.typography}>
+                      {control.action}
+                    </Typography>
+                  </Grid>
+                  <Grid container xs={6}>
+                    <Typography className={classes.typography}>
+                      {control.control}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+          <DialogActions className={classes.centerAlign} style={{paddingBottom: "20px"}}>
+            <Button className={classes.buttonGame} onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
   )
 }
 
