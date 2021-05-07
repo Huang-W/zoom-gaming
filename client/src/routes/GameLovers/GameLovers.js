@@ -184,7 +184,7 @@ const GameLovers = (props) => {
          {action: "Back/Cancel", control: "S"},
          {action: "Space-Set", control: "A"},
        ]
-     default:
+     case ("Broforce"):
        return [
          {action: "Move Up", control: "Up Arrow"},
          {action: "Move Down", control: "Down Arrow"},
@@ -196,6 +196,8 @@ const GameLovers = (props) => {
          {action: "Melle", control: "S"},
          {action: "Flex", control: "Space"},
        ]
+     default:
+       return []
    }
   }
 
@@ -245,7 +247,7 @@ const GameLovers = (props) => {
       <>
         <video id="remote-video" autoPlay muted playsInline style={{width: "100%", height: "100%"}}></video>
         <Dialog
-          open={open}
+          open={open && getControls(props.gameId).length}
           TransitionComponent={Transition}
           className={classes.mobileDialog}
           keepMounted
