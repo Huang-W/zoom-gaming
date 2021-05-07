@@ -4,8 +4,8 @@ export const StyledContainer = styled.div`
 	position: relative;
 	width: 100vw;
 
-	min-height: 100vh;
-	overflow: hidden;
+	overflow: scroll;
+	padding: 50px;
 	/* 
     Used for background image. Fills entire Container div. Before used so opacity does not impact children elements */
 	&:before {
@@ -13,7 +13,6 @@ export const StyledContainer = styled.div`
 		content: '';
 		height: 100%;
 		width: 100%;
-		background-image: url(/img/pattern-light.png);
 		opacity: 0.6;
 		position: absolute;
 		top: 0;

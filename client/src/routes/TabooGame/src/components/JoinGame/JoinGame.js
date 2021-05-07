@@ -22,6 +22,7 @@ export class JoinGame extends React.Component {
 
 	//Update to creating player id, validating gamecode, redirecting to 'Waiting Room'
 	handleSubmit = (values, setSubmitting) => {
+		window.localStorage.setItem("gamecode", values.gamecode.toUpperCase());
 		this.setState(
 			{
 				playerName: values.name.toUpperCase(),
@@ -63,7 +64,7 @@ export class JoinGame extends React.Component {
 		]
 
 		return this.state.redirect ? (
-			<Redirect to={`/waiting/${this.state.gamecode}`} />
+			<Redirect to={`${window.localStorage.getItem("path")}/waiting/${window.localStorage.getItem("gamecode")}`} />
 		) : (
 			<ButtonTabooCard tabooWord="Join Game" buttons={buttonInfo}>
 				<JoinGameForm initialValues={{ name, gamecode }} handleSubmit={this.handleSubmit} />

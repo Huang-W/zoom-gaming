@@ -102,13 +102,12 @@ export class Waiting extends React.Component {
 
 	render() {
 		const { gamecode } = this.props.match.params
-		// console.log(this.props)
 		//In process of verifying game and player
 		if (this.state.loading) {
 			return <LoadingCard message="Joining waiting room" />
 			//Game is already in progress or complete. Can't join Waiting Room
 		} else if (this.props.game[gamecode]?.status === 'in progress') {
-			return <Redirect to={`/play/${gamecode}`} />
+			return <Redirect to={`${window.localStorage.getItem("path")}/play/${gamecode}`} />
 			//If url contains gamecode that is not valid
 		} else if (!this.state.gameVerified) {
 			const error = "That game doesn't exist, is already in progress, or is complete and can't be joined."

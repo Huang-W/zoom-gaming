@@ -9,6 +9,7 @@ import Pending from '../shared/Pending'
 import {ErrorMessage} from '../shared/FeedbackMessage'
 import { createNewGame } from '../../store/actions/gameActions'
 import { clearErrors } from '../../store/actions/errorActions'
+import {Link} from "@material-ui/core";
 
 export class CreateGame extends React.Component {
 	constructor(props) {
@@ -44,6 +45,7 @@ export class CreateGame extends React.Component {
 				const endValue = endGameMethod === 'turns' ? turnsValue : timeValue
 				//6 characters of capital letters and numbers excluding zero and O
 				const gamecode = randomize('A0', 6, {exclude: "0oO"})
+				window.localStorage.setItem("gamecode", gamecode.toUpperCase());
 				const gameData = {
 					status: 'new',
 					endGameMethod,
@@ -99,9 +101,9 @@ export class CreateGame extends React.Component {
 			},
 		]
 		return this.state.redirect ? (
-			<Redirect to={`${this.props.location.pathname}/waiting/${this.props.gamecode}`} />
-		) : (
-			<ButtonTabooCard tabooWord="New Game" buttons={buttonInfo}>
+			<Redirect to={`${window.localStorage.getItem("path")}/waiting/${this.props.gamecode}`} />
+	) : (
+			<ButtonTabooCard tabooWord="New Game" buttons={buttonInfo} gameId={this.props.gamecode} path={this.props.match.path}>
 				<CreateGameForm initialValues={this.state} handleSubmit={this.handleSubmit} />
 				{this.props.isPending ? <Pending speed={300} message="Creating new game" /> : null}
 				{this.props.error ? <ErrorMessage error="There was a problem creating the game. Please try again." /> : null}

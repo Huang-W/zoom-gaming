@@ -62,6 +62,7 @@ const useStyles = makeStyles((theme) => ({
         color: "white",
         fontFamily: "'Press Start 2P', cursive",
         marginLeft: "40px",
+        fontSize: "16px",
     },
     gameFont: {
         fontFamily: "'Press Start 2P', cursive",
@@ -236,10 +237,10 @@ const Room = (props) => {
               </Toolbar>
           </AppBar>
           <Grid container style={{height: "calc(100% - 64px)"}}>
-              <Grid item xs={10} className={classes.centerAlign}>
+              <Grid item xs={10} className={classes.centerAlign} style={{height: "85vh"}}>
                   {gameID === "Taboo" ?<TabooGame /> : <GameLovers roomId={roomID} gameId={gameID}/>}
               </Grid>
-              <Grid item xs={2} container direction={"column"} className={classes.centerAlign}>
+              <Grid item xs={2} container direction={"column"} className={classes.centerAlign} style={{height: "calc(100% - 64px)", overflow: "scroll"}}>
                   <StyledVideo muted ref={userVideo} autoPlay playsInline />
                   {_.uniqBy(peers, 'peerID').map((peer) => {
                       return (
@@ -247,7 +248,7 @@ const Room = (props) => {
                       );
                   })}
               </Grid>
-              <Grid className={classes.videoOptions}>
+              <Grid className={classes.videoOptions} item xs={10}>
                   {
                       mic ? (
                         <MicIcon onClick={handleMicClick} style={{ color: 'white', fontSize: 45, marginRight: 15 }}/>

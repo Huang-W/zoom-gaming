@@ -72,7 +72,7 @@ export class EndGame extends React.Component {
 
 		//any other incorrect status will result in an error message
 		if (game.status === 'in progress') { 
-			return <Redirect to={`/play/${gamecode}`} />
+			return <Redirect to={`${window.localStorage.getItem("path")}/play/${window.localStorage.getItem("gamecode")}`} />
 		} else if (this.state.loading) {
 			return <LoadingCard message="Calculating final scores" />
 		} else if (!this.state.gameVerified) {

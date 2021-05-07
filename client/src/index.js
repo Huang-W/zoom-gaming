@@ -2,35 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom'
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { createStore, compose, applyMiddleware } from 'redux'
-import thunk from 'redux-thunk'
-import { Provider } from 'react-redux'
 import ParticlesBg from "particles-bg";
-import { reduxFirestore, getFirestore, createFirestoreInstance } from 'redux-firestore'
-import { ReactReduxFirebaseProvider, getFirebase } from 'react-redux-firebase'
-import firebase from 'firebase/app'
-import fbConfig from './taboo/utils/fbConfig'
-import rootReducer from './taboo/store/reducers/rootReducer'
-import { ThemeProvider } from 'styled-components'
 import App from './App'
-import GlobalStyle from './taboo/global-design/globalStyles'
-// import theme from './taboo/global-design/theme'
-import {createMuiTheme, CssBaseline} from "@material-ui/core";
 
-const store = createStore(
-  rootReducer,
-  compose(applyMiddleware(thunk.withExtraArgument({ getFirebase, getFirestore })), reduxFirestore(fbConfig))
-)
-
-//react-redux-firebase props
-const rrfProps = {
-  firebase,
-  config: fbConfig,
-  dispatch: store.dispatch,
-  createFirestoreInstance,
-  presence: 'presence',
-  sessions: 'sessions',
-}
 
 let config = {
   num: [4, 7],
@@ -69,12 +43,8 @@ if (Math.random() > 0.85) {
 
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={store}>
-      <ReactReduxFirebaseProvider {...rrfProps}>
-          <App />
-          <ParticlesBg type="custom" config={config} bg={true} />
-      </ReactReduxFirebaseProvider>
-    </Provider>
+    <App />
+    <ParticlesBg type="custom" config={config} bg={true} />
   </React.StrictMode>,
   document.getElementById('root')
 )

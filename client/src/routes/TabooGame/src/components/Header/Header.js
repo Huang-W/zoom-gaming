@@ -9,16 +9,7 @@ export default function Header({ location }) {
   const homeRouteExact = location.pathname === ("/home")
 
   return (
-    <StyledHeader large={homeOrEndRoute} subheading={homeRouteExact}>
-      <Title large={homeOrEndRoute}>Taboo!</Title>
-      {homeRouteExact && (
-        <Subheading>
-          The team game that’s all about what you{" "}
-          <FocusSpan>say,</FocusSpan> and what you{" "}
-          <FocusSpan>don’t!</FocusSpan>
-        </Subheading>
-      )}
-    </StyledHeader>
+    <></>
   )
 }
 

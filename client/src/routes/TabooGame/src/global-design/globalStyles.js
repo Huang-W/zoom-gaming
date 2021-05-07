@@ -19,7 +19,8 @@ const GlobalStyle = createGlobalStyle`
         font-family: Roboto, Arial;
         line-height:1.4; 
         min-height: 100vh;
-        max-width: 100vw;             
+        max-width: 100vw;
+        font-size: 16px;          
     }
 `
 

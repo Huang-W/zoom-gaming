@@ -5,6 +5,11 @@ import Header from './components/Header'
 import LayeredCards from './components/LayeredCards'
 import LoadingSpinner from './components/shared/LoadingSpinner'
 import { createGreetingMsg } from './utils/helpers'
+import MainMenu from "./components/MainMenu";
+import CreateGame from "./components/CreateGame";
+import JoinGame from "./components/JoinGame";
+import Rules from "./components/Rules";
+import Submit from "./components/Submit";
 //Code splitting routes
 const Home = lazy(() => import('./pages/Home'))
 const Waiting = lazy(() => import('./pages/Waiting'))
@@ -14,6 +19,7 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 
 const App = () => {
 	const path = useLocation().pathname;
+	window.localStorage.setItem("path", path);
 	useEffect(() => {
 		if (process.env.NODE_ENV === 'production') {
 			createGreetingMsg()

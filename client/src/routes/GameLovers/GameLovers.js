@@ -1,6 +1,9 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import { DCLabel } from "./datachannel";
 import { InputMap } from "./input";
+import Button from "@material-ui/core/Button";
+import {gamecode} from "../TabooGame/src/__fixtures__/game";
+import {useHistory} from "react-router";
 const pb = require('./proto/signaling_pb');
 const input = require('./proto/input_pb');
 
@@ -9,14 +12,18 @@ const SERVER_ADDR = "w2.zoomgaming.app";
 
 const GameLovers = (props) => {
 
+  const history = useHistory();
+
+  const [failed, updateFailed] = useState(true);
+
  useEffect(() => {
    let peerConnection = null; // webrtc connection
    let input_dc = null; // keyboard events are sent to the server using this
-   let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/${props.gameId}`); // session description is sent/received via websocket
+   let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/${props.roomId}/${props.gameId}`); // session description is sent/received via websocket
    webSocket.binaryType = "arraybuffer" // blob or arraybuffer
    // webSocket.addEventListener("open", event => { console.log("ws open"); });
    webSocket.addEventListener("message", event => { handleWebsocketEvent(event); });
-   webSocket.addEventListener("close", event => { console.log("ws closing"); });
+   webSocket.addEventListener("close", event => { console.log("ws closing") });
    webSocket.onerror = function(event) { console.error("WebSocket error observed:", event); };
 
    let startSession = (offer) => {
@@ -113,10 +120,10 @@ const GameLovers = (props) => {
            input_dc.send(input_msg.serializeBinary().buffer);
          }
        });
-
        return createOffer(pc);
      }).then(offer => {
        startSession(offer);
+       updateFailed(true);
      }).then(() => pc);
    }
 
@@ -149,8 +156,48 @@ const GameLovers = (props) => {
    }
  }, [props.gameId])
 
-  return(
-    <video id="remote-video" autoPlay muted playsInline style={{width: "100%"}}></video>
+  return failed ? (
+    <div style={{
+      border: "dashed 5px white",
+      fontFamily: "'Press Start 2P', cursive",
+      color: "white",
+      textAlign: "center",
+      fontSize: "20px",
+      width: "100%",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      flexDirection: "column",
+      padding: "30px"
+
+    }}>
+      <a>Sorry, this game is not available now.</a>
+      <br/>
+      <br/>
+      <a>Looks like our free server is taking a toll!</a>
+      <br/>
+      <a>You can still play
+        <Button style={{
+          color: "white",
+          marginLeft: "20px",
+          marginRight: "5px",
+          fontSize: "20px",
+          fontFamily: "'Press Start 2P', cursive",
+          padding: "20px",
+          border: "dashed 5px white",
+          height: "20px",
+          borderRadius: 0,
+        }} onClick={() => history.push(`/${props.roomId}/Taboo`)}>
+        Taboo
+        </Button>
+        .
+      </a>
+      <br/>
+      <a>It's one of our favorites.</a>
+    </div>
+    ) :
+    (
+    <video id="remote-video" autoPlay muted playsInline style={{width: "100%", height: "100%"}}></video>
   )
 }
 

@@ -84,7 +84,7 @@ export class PlayGame extends React.Component {
 		const { gamecode } = this.props.match.params
 		const { game } = this.props
 		if (game.status === 'completed') {
-			return <Redirect to={`/end/${gamecode}`} />
+			return <Redirect to={`${window.localStorage.getItem("path")}/end/${window.localStorage.getItem("gamecode")}`} />
 		} else if (this.state.loading) {
 			return <LoadingCard message="Setting up game" />
 			//loading is default state until game and player verified
