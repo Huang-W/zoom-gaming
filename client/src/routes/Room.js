@@ -122,7 +122,7 @@ const Room = (props) => {
                     peer,
                 }
 
-                setPeers([...peers, peerObj]);
+                setPeers(users => [...users, peerObj]);
                 console.log("user left", peers)
             });
 

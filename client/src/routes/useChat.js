@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import socketIOClient from "socket.io-client";
+import {useLocation} from "react-router-dom";
 
-const NEW_CHAT_MESSAGE_EVENT = "newChatMessage"; // Name of the event
-const SOCKET_SERVER_URL = "http://localhost:3000";
 
 const useChat = (roomId) => {
   const [messages, setMessages] = useState([]); // Sent and received messages
   const socketRef = useRef();
+  const location = useLocation();
+  const NEW_CHAT_MESSAGE_EVENT = "newChatMessage"; // Name of the event
+  const SOCKET_SERVER_URL = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:3000" : "https://group-video-app.herokuapp.com";
+
 
   useEffect(() => {
 
