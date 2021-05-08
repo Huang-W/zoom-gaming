@@ -92,7 +92,7 @@ const Room = (props) => {
     useEffect(() => {
         socketRef.current = io.connect("/");
 
-        const videoConstraints = { "width": 640, "height": 400 };
+        const videoConstraints = { "width": 280, "height": 180 };
         navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true }).then(stream => {
             userVideo.current.srcObject = stream;
             socketRef.current.emit("join room", roomID);
