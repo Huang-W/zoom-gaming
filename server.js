@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socket(server);
 
-// let roomIDLocal = "";
+let roomIDLocal = "";
 
 // map of RoomID -> { id: socketId, peer: Peer }
 let users = new Map();
@@ -24,17 +24,8 @@ const NEW_CHAT_MESSAGE_EVENT = "newChatMessage";
 
 io.on('connection', socket => {
     socket.on("join room", roomID => {
-
+        roomIDLocal = roomID;
         socket.join(roomID);
-
-        // Join a conversation
-        // const { roomId } = socket.handshake.query;
-        // socket.join(roomIDLocal);
-
-        // Listen for new messages
-        socket.on(NEW_CHAT_MESSAGE_EVENT, (data) => {
-            io.in(roomID).emit(NEW_CHAT_MESSAGE_EVENT, data);
-        });
 
         if (!users.has(roomID)) {
             users.set(roomID, []);
@@ -84,6 +75,15 @@ io.on('connection', socket => {
 
         users.get(roomID).push({ id: socket.id, peer: peer });
         socketToRoom.set(socket.id, roomID);
+    });
+
+  // Join a conversation
+  // const { roomId } = socket.handshake.query;
+    socket.join(roomIDLocal);
+
+    // Listen for new messages
+    socket.on(NEW_CHAT_MESSAGE_EVENT, (data) => {
+      io.in(roomIDLocal).emit(NEW_CHAT_MESSAGE_EVENT, data);
     });
 
     /**

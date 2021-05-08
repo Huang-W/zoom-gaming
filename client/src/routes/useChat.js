@@ -9,7 +9,7 @@ const useChat = (roomId) => {
   const location = useLocation();
   const NEW_CHAT_MESSAGE_EVENT = "newChatMessage"; // Name of the event
   const SOCKET_SERVER_URL = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:3000" : "https://group-video-app.herokuapp.com";
-
+  // const SOCKET_SERVER_URL ="http://localhost:3000";
 
   useEffect(() => {
 
