@@ -245,7 +245,7 @@ const GameLovers = (props) => {
     ) :
     (
       <>
-        <video id="remote-video" autoPlay muted playsInline style={{width: "100%", height: "100%"}}></video>
+        <video id="remote-video" autoPlay playsInline onloadstart="this.volume=0.7" style={{width: "100%", height: "100%"}}></video>
         <Dialog
           open={open && getControls(props.gameId).length}
           TransitionComponent={Transition}
