@@ -62,7 +62,7 @@ io.on('connection', socket => {
             // notify all current players of a new stream
             const usersInThisRoom = users.get(roomID).filter(obj => obj.id !== socket.id);
             for (let obj of usersInThisRoom) {
-                obj.peer.addStream(stream);
+                obj?.peer?.addStream(stream);
             }
         });
 

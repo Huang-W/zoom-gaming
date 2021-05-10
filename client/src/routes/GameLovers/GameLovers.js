@@ -148,7 +148,7 @@ const GameLovers = (props) => {
        console.log("ws open");
        startRemoteSession(remoteVideo).then(pc => {
          remoteVideo.style.setProperty('visibility', 'visible');
-         remoteVideo.volume = 0.03;
+         remoteVideo.volume = 0.1;
          peerConnection = pc;
        }).catch((error) => { console.error(error); });
      }
