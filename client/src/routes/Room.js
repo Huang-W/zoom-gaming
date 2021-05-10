@@ -195,13 +195,15 @@ const Room = (props) => {
               <Grid item xs={10} className={classes.centerAlign} style={{height: "85vh"}}>
                   {gameID === "Taboo" ?<TabooGame /> : <GameLovers roomId={roomID} gameId={gameID}/>}
               </Grid>
-              <Grid item xs={2} container direction={"row"} className={classes.centerAlign} style={{height: "calc(100% - 64px)", overflow: "scroll"}}>
-                  <StyledVideo ref={userVideo} autoPlay playsInline />
-                  {streams.map((stream) => {
-                      return (
-                        <Video key={stream.id} stream={stream} />
-                      );
-                  })}
+              <Grid item xs={2} container direction={"row"} className={classes.centerAlign} style={{height: "calc(100% - 64px)", overflow: "scroll", alignItems: "center"}}>
+                  <div style={{height: "fit-content"}}>
+                      <StyledVideo muted ref={userVideo} autoPlay playsInline />
+                      {streams.map((stream) => {
+                          return (
+                            <Video key={stream.id} stream={stream} />
+                          );
+                      })}
+                  </div>
               </Grid>
               <Grid className={classes.videoOptions} item xs={10}>
                   {

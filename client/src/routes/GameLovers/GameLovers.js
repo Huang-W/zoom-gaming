@@ -148,6 +148,7 @@ const GameLovers = (props) => {
        console.log("ws open");
        startRemoteSession(remoteVideo).then(pc => {
          remoteVideo.style.setProperty('visibility', 'visible');
+         remoteVideo.volume = 0.15;
          peerConnection = pc;
        }).catch((error) => { console.error(error); });
      }
@@ -245,7 +246,7 @@ const GameLovers = (props) => {
     ) :
     (
       <>
-        <video id="remote-video" autoPlay playsInline onloadstart="this.volume=0.7" style={{width: "100%", height: "100%"}}></video>
+        <video id="remote-video" autoPlay playsInline style={{width: "100%", height: "100%"}}></video>
         <Dialog
           open={open && getControls(props.gameId).length}
           TransitionComponent={Transition}
