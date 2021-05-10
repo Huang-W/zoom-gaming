@@ -10,7 +10,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "35vw",
+    width: "500px",
     height: "45vw",
     border: "solid 5px white",
     overflow: "-moz-hidden-unscrollable",
