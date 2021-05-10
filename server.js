@@ -63,7 +63,7 @@ io.on('connection', socket => {
             const usersInThisRoom = users.get(roomID).filter(obj => obj.id !== socket.id);
             for (let obj of usersInThisRoom) {
                 try{
-                    obj.peer.addStream(stream);
+                    obj.peer?.addStream(stream);
                 } catch (error) {
                     console.log("Error: ", error)
                 }
