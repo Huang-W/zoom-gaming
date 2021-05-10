@@ -77,13 +77,17 @@ io.on('connection', socket => {
             peer.signal(signal);
         });
 
+        socket.on(NEW_CHAT_MESSAGE_EVENT, (data) => {
+            io.in(roomIDLocal).emit(NEW_CHAT_MESSAGE_EVENT, data);
+        });
+
         users.get(roomID).push({ id: socket.id, peer: peer });
         socketToRoom.set(socket.id, roomID);
     });
 
     // Join a conversation
     // const { roomId } = socket.handshake.query;
-    socket.join(roomIDLocal);
+    // socket.join(roomIDLocal);
 
     // Listen for new messages
     socket.on(NEW_CHAT_MESSAGE_EVENT, (data) => {
