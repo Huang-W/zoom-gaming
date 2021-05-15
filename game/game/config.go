@@ -1,9 +1,8 @@
 package game
 
 import (
-	"github.com/bendahl/uinput"
-	_ "github.com/linuxdeepin/go-x11-client"
-	_ "github.com/linuxdeepin/go-x11-client/util/keysyms"
+	x "github.com/linuxdeepin/go-x11-client"
+	"github.com/linuxdeepin/go-x11-client/util/keysyms"
 
 	pb "zoomgaming/proto"
 )
@@ -31,9 +30,8 @@ func GameTypeOf(game_id string) GameType {
 	}
 }
 
-/**
 type keysymMapping map[pb.KeyPressEvent_Key](x.Keysym)
-type KeycodeMapping map[pb.KeyPressEvent_Key](x.Keycode)
+type keycodeMapping map[pb.KeyPressEvent_Key](x.Keycode)
 type gameMapping map[PlayerIndex](keysymMapping)
 
 var GameMappings = map[GameType](gameMapping){
@@ -128,8 +126,8 @@ var GameMappings = map[GameType](gameMapping){
 		},
 	},
 }
-*/
 
+/**
 type Keycode int
 type KeyMapping map[pb.KeyPressEvent_Key](Keycode)
 type gameMapping map[PlayerIndex](KeyMapping)
@@ -226,6 +224,7 @@ var GameMappings = map[GameType](gameMapping){
 		},
 	},
 }
+*/
 
 type mediaStreamType int
 

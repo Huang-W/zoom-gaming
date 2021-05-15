@@ -11,23 +11,24 @@ import (
 	"github.com/unrolled/render"
 	"github.com/urfave/negroni"
 
-	"zoomgaming/game"
-	"zoomgaming/room"
+	"zoomgaming/coordinator"
 	zws "zoomgaming/websocket"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
-var r room.Room
+var c coordinator.RoomCoordinator
 
 func main() {
+
 	flag.Parse()
 	var err error
-	r, err = room.NewRoom(game.SpaceTime)
+
+	c, err = coordinator.NewRoomCoordinator(2)
 	if err != nil {
-		log.Printf("Failed to create a room :%s", err)
+		log.Println(err)
 		os.Exit(1)
 	}
-	defer r.Close()
+
 	server := NewServer()
 	server.Run(*addr)
 }
@@ -55,7 +56,7 @@ func initRoutes(mx *mux.Router, formatter *render.Render) {
 	mx.HandleFunc("/ping", pingHandler(formatter)).Methods("GET")
 	s := mx.PathPrefix("/demo").Subrouter()
 	s.HandleFunc("", gameHandler(formatter)).Methods("GET")
-	s.HandleFunc("/{game_id}", gameHandler(formatter)).Methods("GET")
+	s.HandleFunc("/{room_id}/{game_id}", gameHandler(formatter)).Methods("GET")
 	// mx.HandleFunc("/rooms/{room_id:[a-zA-Z0-9]+}/{gane_id:[a-zA-Z0-9]+}", roomHandler(formatter)).Methods("GET")
 }
 
@@ -67,12 +68,17 @@ func pingHandler(formatter *render.Render) http.HandlerFunc {
 
 func gameHandler(formatter *render.Render) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+
 		vars := mux.Vars(req)
+
+		room_id, prs := vars["room_id"]
+		if !prs {
+			room_id = "1111"
+		}
+
 		game_id, prs := vars["game_id"]
-		if prs {
-			if err := r.SwitchGame(game_id); err != nil {
-				log.Printf("Error switching games: %s", err)
-			}
+		if !prs {
+			game_id = "SpaceTime"
 		}
 
 		conn, err := upgrader.Upgrade(w, req, nil)
@@ -83,9 +89,8 @@ func gameHandler(formatter *render.Render) http.HandlerFunc {
 
 		ws := zws.NewWebSocket(conn)
 
-		err = r.NewPlayer(ws)
-		if err != nil {
-			log.Printf("adding new player to r: %s", err)
+		if err := c.JoinRoom(room_id, game_id, ws); err != nil {
+			log.Printf("joining room: %s", err)
 			ws.Close()
 		}
 	}

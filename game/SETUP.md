@@ -15,6 +15,7 @@
 ### Configuration X server
 
 - `sudo nvidia-xconfig --mode-list=1280x720 --separate-x-screens`
+- `sudo nohup Xorg :99 -novtswitch -sharevts -nolisten tcp +extension MIT-SHM vt7 &`
 
 ### Keyboard Mappings for demo game
 

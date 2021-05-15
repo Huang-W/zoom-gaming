@@ -9,7 +9,9 @@ import (
 	"os/exec"
 	"os/user"
 
-	uinput "gopkg.in/bendahl/uinput.v1"
+	x "github.com/linuxdeepin/go-x11-client"
+	"github.com/linuxdeepin/go-x11-client/ext/test"
+	"github.com/linuxdeepin/go-x11-client/util/keysyms"
 
 	proto "google.golang.org/protobuf/proto"
 
@@ -29,15 +31,22 @@ type Game interface {
 }
 
 type game struct {
-	typ      GameType
-	gameExec *exec.Cmd
-	cancel   context.CancelFunc
+	typ            GameType
+	xdisplay       *x.Conn
+	gameExec       *exec.Cmd
+	cancel         context.CancelFunc
+	playerMappings map[PlayerIndex](keycodeMapping)
 }
 
-func NewGame(typ GameType) (g Game, err error) {
+func NewGame(typ GameType, roomIndex int) (g Game, err error) {
+
+	var xdisplay *x.Conn
 
 	defer func() {
 		if r := recover(); r != nil {
+			if xdisplay != nil {
+				xdisplay.Close()
+			}
 			err = errors.New(fmt.Sprintf("%s", r))
 			return
 		}
@@ -46,6 +55,21 @@ func NewGame(typ GameType) (g Game, err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var gameExec *exec.Cmd
+	xdisplay, err = x.NewConnDisplay(fmt.Sprintf(":%d", 99-roomIndex))
+	if err != nil {
+		panic(fmt.Sprintf("Unable to connect to display %d", 99-roomIndex))
+	}
+
+	symbols := keysyms.NewKeySymbols(xdisplay)
+
+	keysymMappings := GameMappings[typ]
+	keycodeMappings := make(map[PlayerIndex](keycodeMapping), len(keysymMappings))
+	for player, mapping := range keysymMappings {
+		keycodeMappings[player] = make(keycodeMapping, len(mapping))
+		for keyPressEvent, keysym := range mapping {
+			keycodeMappings[player][keyPressEvent] = symbols.GetKeycodes(keysym)[0]
+		}
+	}
 
 	curr_user, err := user.Current()
 	if err != nil {
@@ -65,12 +89,14 @@ func NewGame(typ GameType) (g Game, err error) {
 		panic("Invalid game type")
 	}
 
-	gameExec.Env = append(os.Environ(), fmt.Sprintf("DISPLAY=:%d", 99))
+	gameExec.Env = append(os.Environ(), fmt.Sprintf("DISPLAY=:%d", 99-roomIndex))
 
 	game := &game{
-		typ:      typ,
-		gameExec: gameExec,
-		cancel:   cancel,
+		typ:            typ,
+		xdisplay:       xdisplay,
+		gameExec:       gameExec,
+		cancel:         cancel,
+		playerMappings: keycodeMappings,
 	}
 
 	if game.gameExec.Path != "" {
@@ -88,6 +114,7 @@ func NewGame(typ GameType) (g Game, err error) {
 		select {
 		case <-ctx.Done():
 			gameExec.Process.Signal(os.Interrupt)
+			game.xdisplay.Close()
 		}
 	}()
 
@@ -95,9 +122,9 @@ func NewGame(typ GameType) (g Game, err error) {
 	return
 }
 
-func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex, keyboard uinput.Keyboard) error {
+func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex) error {
 
-	mapping, prs := GameMappings[g.typ][idx]
+	mapping, prs := g.playerMappings[idx]
 	if !prs {
 		return errors.New("player not found")
 	}
@@ -111,6 +138,7 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex, keybo
 		}()
 	} else {
 		go func() {
+			root := g.xdisplay.GetDefaultScreen().Root
 			for msg := range ch {
 				switch t := msg.(type) {
 				case *pb.InputEvent:
@@ -118,13 +146,14 @@ func (g *game) AttachInputStream(ch <-chan proto.Message, idx PlayerIndex, keybo
 					key := mapping[evt.GetKey()]
 					switch evt.GetDirection() {
 					case pb.KeyPressEvent_DIRECTION_UP:
-						keyboard.KeyUp(key)
+						test.FakeInput(g.xdisplay, x.KeyReleaseEventCode, uint8(key), x.CurrentTime, root, 0, 0, 0)
 					case pb.KeyPressEvent_DIRECTION_DOWN:
-						keyboard.KeyDown(key)
+						test.FakeInput(g.xdisplay, x.KeyPressEventCode, uint8(key), x.CurrentTime, root, 0, 0, 0)
 					default:
 						log.Printf("No direction specified")
 						continue
 					}
+					g.xdisplay.Flush()
 				default:
 					log.Printf("Unexcepted type: %T", t)
 					continue

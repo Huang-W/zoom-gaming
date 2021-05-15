@@ -8,8 +8,6 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	uinput "gopkg.in/bendahl/uinput.v1"
-
 	game "zoomgaming/game"
 	utils "zoomgaming/utils"
 	rtc "zoomgaming/webrtc"
@@ -26,8 +24,9 @@ Up to 4 players in a room
 */
 
 type Room interface {
-	SwitchGame(string) error
+	// SwitchGame(string) error
 	NewPlayer(ws.WebSocket) error
+	Done() <-chan struct{}
 	Close()
 }
 
@@ -42,9 +41,11 @@ type room struct {
 
 	mu      *sync.Mutex // protects players
 	players map[game.PlayerIndex](rtc.WebRTC)
+	spectators []rtc.WebRTC
+	done    chan struct{}
 }
 
-func NewRoom(typ game.GameType) (res Room, err error) {
+func NewRoom(typ game.GameType, roomIndex int) (res Room, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -57,18 +58,18 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 
 	switch typ {
 	case game.TestGame:
-		videoStream, err = game.NewStream(game.TestH264)
+		videoStream, err = game.NewStream(game.TestH264, roomIndex)
 		utils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = game.NewStream(game.TestOpus)
+		audioStream, err = game.NewStream(game.TestOpus, roomIndex)
 		utils.FailOnError(err, "Error starting audio stream: %s")
 	default:
-		videoStream, err = game.NewStream(game.VideoSH)
+		videoStream, err = game.NewStream(game.VideoSH, roomIndex)
 		utils.FailOnError(err, "Error starting video stream: %s")
-		audioStream, err = game.NewStream(game.AudioSH)
+		audioStream, err = game.NewStream(game.AudioSH, roomIndex)
 		utils.FailOnError(err, "Error starting audio stream: %s")
 	}
 
-	g, err := game.NewGame(typ)
+	g, err := game.NewGame(typ, roomIndex)
 	utils.FailOnError(err, "Error creating game: ")
 
 	// Create a video track
@@ -88,6 +89,8 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 		videoStream: videoStream,
 		mu:          &sync.Mutex{},
 		players:     make(map[game.PlayerIndex](rtc.WebRTC)),
+		spectators:  make([]rtc.WebRTC, 0),
+		done:        make(chan struct{}),
 	}
 
 	go func() {
@@ -116,6 +119,7 @@ func NewRoom(typ game.GameType) (res Room, err error) {
 	return
 }
 
+/**
 func (r *room) SwitchGame(game_id string) error {
 
 	r.mu.Lock()
@@ -145,6 +149,7 @@ func (r *room) SwitchGame(game_id string) error {
 		return nil
 	}
 }
+*/
 
 func (r *room) NewPlayer(ws ws.WebSocket) error {
 
@@ -161,29 +166,32 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 		}
 	}
 
-	if idx == game.PlayerUndefined {
-		return errors.New(fmt.Sprintf("Only %d allowed players at a time", len(r.keycodeMappings)))
-	}
-
 	rtc, err := rtc.NewWebRTC(ws, r.videoTrack, r.audioTrack)
 	if err != nil {
 		return err
 	}
 
+	if idx != game.PlayerUndefined {
 	// CHANGE THIS: Use the first data channel (GameInput) as input for game
 	dcs := rtc.DataChannels()
 	go func() {
-		// initialize keyboard and check for possible errors
-		keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte(fmt.Sprintf("%s_virtualkeyboard_%d", r.typ, idx)))
-		if err != nil {
-			return err
-		}
-		defer keyboard.Close()
 		defer r.removePlayer(idx) // remove player if the rtc connection shuts down
 		for ch := range dcs {
-			r.game.AttachInputStream(ch, idx, keyboard)
+			r.game.AttachInputStream(ch, idx)
 		}
 	}()
+
+	r.players[idx] = rtc
+
+	log.Println("number of players in the room after adding: ", len(r.players))
+
+	} else {
+		dcs := rtc.DataChannels()
+		go func() {
+			for _ = range dcs {}
+		}()
+		r.spectators = append(r.spectators, rtc)
+	}
 	/**
 	tracks := rtc.Broadcast()
 	go func() {
@@ -194,16 +202,17 @@ func (r *room) NewPlayer(ws ws.WebSocket) error {
 		}
 	}()
 	*/
-	r.players[idx] = rtc
-
-	log.Println("number of players in the room after adding: ", len(r.players))
-
 	return nil
 }
 
+func (r *room) Done() <-chan struct{} {
+	return r.done
+}
+
 func (r *room) Close() {
-	r.videoStream.Stop()
-	r.audioStream.Stop()
+	for _, conn := range r.players {
+		conn.Close()
+	}
 }
 
 func (r *room) removePlayer(idx game.PlayerIndex) {
@@ -214,5 +223,15 @@ func (r *room) removePlayer(idx game.PlayerIndex) {
 	_, prs := r.players[idx]
 	if prs {
 		delete(r.players, idx)
+	}
+
+	if len(r.players) == 0 {
+		for _, spectator := range r.spectators {
+			spectator.Close()
+		}
+		r.videoStream.Stop()
+		r.audioStream.Stop()
+		r.game.Stop()
+		r.done <- struct{}{}
 	}
 }

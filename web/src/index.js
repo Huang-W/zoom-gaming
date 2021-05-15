@@ -10,8 +10,8 @@ const SERVER_ADDR = "w2.zoomgaming.app";
 (function() {
   let peerConnection = null; // webrtc connection
   let input_dc = null; // keyboard events are sent to the server using this
-  // let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/SpaceTime`); // session description is sent/received via websocket
-  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/Broforce`); // session description is sent/received via websocket
+  let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/asdasd/SpaceTime`); // session description is sent/received via websocket
+  // let webSocket = new WebSocket(`wss://${SERVER_ADDR}/demo/Broforce`); // session description is sent/received via websocket
   webSocket.binaryType = "arraybuffer" // blob or arraybuffer
 
   let handleWebsocketEvent = (event) => {

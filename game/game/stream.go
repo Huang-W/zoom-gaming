@@ -35,7 +35,7 @@ type stream struct {
 	cancel   context.CancelFunc
 }
 
-func NewStream(typ mediaStreamType) (s Stream, err error) {
+func NewStream(typ mediaStreamType, roomIndex int) (s Stream, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -52,21 +52,27 @@ func NewStream(typ mediaStreamType) (s Stream, err error) {
 
 	switch typ {
 	case VideoSH:
-		port = 5004
-		cmd = exec.CommandContext(ctx, "bash", "./video.sh", ":99", fmt.Sprintf("%d", port))
+		port = 5004 + roomIndex*2
+		cmd = exec.CommandContext(ctx, "ffmpeg", "-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-threads", "2", "-filter_threads", "2",
+		"-f", "x11grab", "-draw_mouse", "0", "-s", "1280x720", "-framerate", "60", "-i", fmt.Sprintf(":%d", 99-roomIndex),
+		"-b:v", "2400k", "-minrate:v", "2400k", "-maxrate:v", "2400k", "-bufsize:v", "2400k", "-c", "h264_nvenc", "-preset", "p4", "-tune", "ll", "-profile", "high", "-f", "rtp",
+		fmt.Sprintf("rtp://127.0.0.1:%d", port))
+		// cmd = exec.CommandContext(ctx, "bash", "./video.sh", fmt.Sprintf(":%d", 99-roomIndex), fmt.Sprintf("%d", port))
 		break
 	case AudioSH:
-		port = 4004
-		cmd = exec.CommandContext(ctx, "bash", "./audio.sh", fmt.Sprintf("%d", port))
+		port = 4004 + roomIndex*2
+		cmd = exec.CommandContext(ctx, "gst-launch-1.0", "pulsesrc", "provide-clock=True", "do-timestamp=True", "!", "opusenc", "bitrate=64000", "!", "rtpopuspay", "!", "queue",
+		"leaky=1", "max-size-time=16000000", "max-size-buffers=0", "max-size-bytes=0", "!", "udpsink", "host=127.0.0.1", fmt.Sprintf("port=%d", port))
+		// cmd = exec.CommandContext(ctx, "bash", "./audio.sh", fmt.Sprintf("%d", port))
 		break
 	case TestH264:
-		port = 5004
+		port = 5004 + roomIndex*2
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-re", "-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
 			"-vcodec", "libx264", "-cpu-used", "5", "-deadline", "1", "-g", "10", "-error-resilient", "1", "-auto-alt-ref", "1", "-f", "rtp",
 			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
 		break
 	case TestOpus:
-		port = 4004
+		port = 4004 + roomIndex*2
 		cmd = exec.CommandContext(ctx, "ffmpeg", "-f", "lavfi", "-i", "sine=frequency=1000",
 			"-c:a", "libopus", "-b:a", "8000", "-sample_fmt", "s16p", "-ssrc", "1", "-payload_type", "111", "-f", "rtp", "-max_delay", "0", "-application", "lowdelay",
 			fmt.Sprintf("rtp://127.0.0.1:%d?pkt_size=1200", port))
