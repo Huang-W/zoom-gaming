@@ -1,0 +1,217 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Rules render correctly 1`] = `
+.c0 {
+  width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  background-color: currentColor;
+  color: #1982C4;
+}
+
+.c0:before {
+  z-index: -1;
+  position: absolute;
+  content: '';
+  bottom: 1.2rem;
+  left: 0.5rem;
+  width: 50%;
+  top: 80%;
+  max-width: 300px;
+  background: #777;
+  box-shadow: 0 1.5rem 1rem rgba(0,0,0,0.4);
+  -webkit-transform: rotate(-3deg);
+  -ms-transform: rotate(-3deg);
+  transform: rotate(-3deg);
+}
+
+.c1 {
+  background-color: #f7f9f9;
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+  font-family: 'Oswald',sans-serif;
+  font-size: 4rem;
+  color: inherit;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.c2 {
+  background-color: #f7f9f9;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 4rem;
+  margin-top: 1.5rem;
+}
+
+.c6 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+}
+
+.c6:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c6:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c6:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c6:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c7 {
+  width: 47%;
+  padding: 0.6rem 0rem;
+  border: none;
+  border-radius: 2px;
+  background-color: #f7f9f9;
+  font-size: 2.3rem;
+  font-family: 'Oswald',sans-serif;
+  text-transform: uppercase;
+  color: #1982C4;
+  color: #f7f9f9;
+  background-color: #8AC926;
+}
+
+.c7:hover {
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.c7:active {
+  -webkit-filter: brightness(0.8);
+  filter: brightness(0.8);
+  -webkit-transform: translateY(2px);
+  -ms-transform: translateY(2px);
+  transform: translateY(2px);
+}
+
+.c7:focus {
+  border: none;
+  outline: solid 2px #8AC926;
+}
+
+.c7:disabled {
+  -webkit-filter: brightness(0.6);
+  filter: brightness(0.6);
+  cursor: not-allowed;
+}
+
+.c7:focus {
+  outline: solid 2px #f7f9f9;
+}
+
+.c5 {
+  margin-top: 1.5rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.c3 {
+  font-family: 'Oswald',sans-serif;
+  font-size: 2rem;
+  font-weight: 500;
+  text-align: center;
+  color: #333333;
+}
+
+.c3::after {
+  display: block;
+  content: '';
+  width: 80%;
+  height: 1.5px;
+  background-color: #ebebeb;
+  margin: 0.8rem auto 1rem auto;
+}
+
+.c4 {
+  font-size: 1.6rem;
+  text-align: left;
+  padding: 0 0.5rem;
+  margin-bottom: 1rem;
+  color: #333333;
+}
+
+<div
+  className="c0"
+>
+  <div
+    className="c1"
+  >
+    How to Play
+  </div>
+  <div
+    className="c2"
+  >
+    <h5
+      className="c3"
+    >
+      Setup
+    </h5>
+    <p
+      className="c4"
+    >
+      Taboo is a 4 -10 player team game that you can play when you are together with friends or virtually using platforms like Google Meets, Zoom, Skype, or even a group phone call.
+    </p>
+    <p
+      className="c4"
+    >
+      Once a new game is created, join using the gamecode, select a team, and start the fun.
+    </p>
+  </div>
+  <div
+    className="c5"
+  >
+    <button
+      className="c6"
+      onClick={[Function]}
+      type="button"
+    >
+      Close
+    </button>
+    <button
+      className="c7"
+      onClick={[Function]}
+      type="button"
+    >
+      Next
+    </button>
+  </div>
+</div>
+`;

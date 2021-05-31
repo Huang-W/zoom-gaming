@@ -1,0 +1,74 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://localhost:8000",
+  "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "firebase": "^7.14.1",
+    "firebase-tools": "^8.11.2",
+    "formik": "^2.1.4",
+    "google-protobuf": "~3.14.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.27.0",
+    "particles-bg": "^2.5.5",
+    "query-string": "^6.12.1",
+    "randomatic": "^3.1.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-redux": "^7.2.1",
+    "react-redux-firebase": "^3.7.0",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.4.1",
+    "redux": "^4.0.5",
+    "redux-firestore": "^0.13.0",
+    "redux-thunk": "^2.3.0",
+    "sdp": "^2.12.0",
+    "simple-peer": "9.6.2",
+    "socket.io-client": "^2.3.0",
+    "styled-components": "^5.1.0",
+    "uuid": "^7.0.3",
+    "webrtc-adapter": "^7.7.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "postinstall": "yarn build"
+  },
+  "eslintConfig": {
+    "extends": "react-app",
+    "ignorePatterns": [
+      "**/*_pb.js"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.2",
+    "formik": "^2.1.4",
+    "jest-styled-components": "^7.0.2",
+    "prop-types": "^15.7.2",
+    "react-test-renderer": "^16.13.1",
+    "styled-components": "^5.1.1"
+  }
+}

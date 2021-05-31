@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PlayerLIstCard render and functionality is correct renders correctly 1`] = `
+<div
+  className="sc-AxjAm hDlFTS"
+>
+  <div
+    className="sc-AxiKw dGnLMo"
+  >
+    Players
+  </div>
+  <div
+    className="sc-AxhCb JZaCe"
+  >
+    <ul>
+      <li>
+        Child 1
+      </li>
+      <li>
+        Child 2
+      </li>
+    </ul>
+  </div>
+  <div
+    className="sc-fzplWN buDbqD"
+  >
+    <button
+      className="sc-AxmLO gmmVt"
+      onClick={[MockFunction]}
+      value="team 1"
+    >
+      Team 1
+    </button>
+    <button
+      className="sc-AxmLO sc-fzozJi jlLOkV"
+      onClick={[MockFunction]}
+      value="team 2"
+    >
+      Team 2
+    </button>
+  </div>
+</div>
+`;
