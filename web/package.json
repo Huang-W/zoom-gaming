@@ -1,16 +1,19 @@
 {
-  "name": "grpc-web-commonjs-example",
-  "version": "0.1.0",
-  "description": "gRPC-Web CommonJS client example",
-  "license": "Apache-2.0",
+  "name": "group-video-final",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
   "dependencies": {
+    "@material-ui/icons": "^4.11.2",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "google-protobuf": "~3.14.0",
-    "sdp": "^2.12.0",
-    "webrtc-adapter": "^7.7.1"
+    "socket.io": "^2.3.0",
+    "wrtc": "^0.4.7",
+    "simple-peer": "9.6.2"
   },
-  "devDependencies": {
-    "webpack": "~4.43.0",
-    "webpack-cli": "~3.3.11"
+  "scripts": {
+    "start": "PROD=true node server.js",
+    "postinstall": "cd ./client && yarn",
+    "heroku-postbuild": "cd ./client && npm install && npm install --only=dev --no-shrinkwrap && npm run build"
   }
 }

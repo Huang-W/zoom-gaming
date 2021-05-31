@@ -1,0 +1,116 @@
+[negroni] listening on :8080
+2021/05/15 02:33:37 number of players in the room after adding:  1
+[negroni] 2021-05-15T02:33:37Z | 0 | 	 6.973147ms | 127.0.0.1:8080 | GET /demo/YJ4EVJ/SpaceTime
+2021/05/15 02:33:52 Data channel closed
+2021/05/15 02:33:52 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:33:52 closed ws conn
+2021/05/15 02:33:52 ws closing...
+2021/05/15 02:33:52 UDP Connection closed - exiting: read udp 127.0.0.1:5004: use of closed network connection
+2021/05/15 02:33:52 UDP Connection closed - exiting: read udp 127.0.0.1:4004: use of closed network connection
+2021/05/15 02:35:38 number of players in the room after adding:  1
+[negroni] 2021-05-15T02:35:38Z | 0 | 	 2.488217ms | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:35:41 number of players in the room after adding:  1
+[negroni] 2021-05-15T02:35:41Z | 0 | 	 2.703809ms | 127.0.0.1:8080 | GET /demo/5J61AJ/SpaceTime
+2021/05/15 02:36:12 Data channel closed
+2021/05/15 02:36:12 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:36:12 closed ws conn
+2021/05/15 02:36:12 ws closing...
+2021/05/15 02:36:12 UDP Connection closed - exiting: read udp 127.0.0.1:5006: use of closed network connection
+2021/05/15 02:36:12 UDP Connection closed - exiting: read udp 127.0.0.1:4006: use of closed network connection
+2021/05/15 02:36:51 number of players in the room after adding:  2
+[negroni] 2021-05-15T02:36:51Z | 0 | 	 314.549µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:38:46 number of players in the room after adding:  3
+[negroni] 2021-05-15T02:38:46Z | 0 | 	 226.333µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:39:01 Data channel closed
+2021/05/15 02:39:01 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:39:01 closed ws conn
+2021/05/15 02:39:01 ws closing...
+2021/05/15 02:39:08 number of players in the room after adding:  3
+[negroni] 2021-05-15T02:39:08Z | 0 | 	 195.249µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:39:30 Data channel closed
+2021/05/15 02:39:30 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:39:30 closed ws conn
+2021/05/15 02:39:30 ws closing...
+2021/05/15 02:40:10 number of players in the room after adding:  3
+[negroni] 2021-05-15T02:40:10Z | 0 | 	 236.61µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:40:10 number of players in the room after adding:  4
+[negroni] 2021-05-15T02:40:10Z | 0 | 	 152.801µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:40:12 Data channel closed
+2021/05/15 02:40:12 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:40:12 closed ws conn
+2021/05/15 02:40:12 ws closing...
+2021/05/15 02:40:18 number of players in the room after adding:  4
+[negroni] 2021-05-15T02:40:18Z | 0 | 	 236.53µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:40:27 Data channel closed
+2021/05/15 02:40:27 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:40:27 closed ws conn
+2021/05/15 02:40:27 ws closing...
+2021/05/15 02:40:31 Data channel closed
+2021/05/15 02:40:31 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:40:31 closed ws conn
+2021/05/15 02:40:31 ws closing...
+2021/05/15 02:40:52 number of players in the room after adding:  3
+[negroni] 2021-05-15T02:40:52Z | 0 | 	 211.577µs | 127.0.0.1:8080 | GET /demo/XCLPL2/SpaceTime
+2021/05/15 02:43:05 Data channel closed
+2021/05/15 02:43:05 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:43:05 closed ws conn
+2021/05/15 02:43:05 ws closing...
+2021/05/15 02:43:10 Data channel closed
+2021/05/15 02:43:10 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:43:10 closed ws conn
+2021/05/15 02:43:10 ws closing...
+2021/05/15 02:49:34 number of players in the room after adding:  1
+[negroni] 2021-05-15T02:49:34Z | 0 | 	 2.702787ms | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:50:18 number of players in the room after adding:  2
+[negroni] 2021-05-15T02:50:18Z | 0 | 	 341.131µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:50:24 number of players in the room after adding:  3
+[negroni] 2021-05-15T02:50:24Z | 0 | 	 249.071µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:50:27 number of players in the room after adding:  4
+[negroni] 2021-05-15T02:50:27Z | 0 | 	 267.227µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:50:28 upgrading http request: websocket: the client is not using the websocket protocol: 'upgrade' token not found in 'Connection' header
+[negroni] 2021-05-15T02:50:28Z | 400 | 	 266.857µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:50:46 Data channel closed
+2021/05/15 02:50:46 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:50:46 closed ws conn
+2021/05/15 02:50:46 ws closing...
+2021/05/15 02:50:50 number of players in the room after adding:  4
+[negroni] 2021-05-15T02:50:50Z | 0 | 	 256.828µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:51:22 Data channel closed
+2021/05/15 02:51:22 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:51:22 closed ws conn
+2021/05/15 02:51:22 ws closing...
+2021/05/15 02:51:23 number of players in the room after adding:  4
+[negroni] 2021-05-15T02:51:23Z | 0 | 	 304.398µs | 127.0.0.1:8080 | GET /demo/Q5IE5L/SpaceTime
+2021/05/15 02:51:37 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:51:37 closed ws conn
+2021/05/15 02:51:37 ws closing...
+2021/05/15 02:57:02 Data channel closed
+2021/05/15 02:57:02 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:57:02 closed ws conn
+2021/05/15 02:57:02 ws closing...
+2021/05/15 02:57:20 Data channel closed
+2021/05/15 02:57:20 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:57:20 closed ws conn
+2021/05/15 02:57:20 ws closing...
+2021/05/15 02:57:35 Data channel closed
+2021/05/15 02:57:35 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:57:35 closed ws conn
+2021/05/15 02:57:35 ws closing...
+2021/05/15 02:57:35 UDP Connection closed - exiting: read udp 127.0.0.1:5004: use of closed network connection
+2021/05/15 02:57:35 UDP Connection closed - exiting: read udp 127.0.0.1:4004: use of closed network connection
+2021/05/15 02:57:39 Data channel closed
+2021/05/15 02:57:39 Closing Error: websocket: close 1005 (no status)
+2021/05/15 02:57:39 closed ws conn
+2021/05/15 02:57:39 ws closing...
+2021/05/15 02:57:39 UDP Connection closed - exiting: read udp 127.0.0.1:5006: use of closed network connection
+2021/05/15 02:57:39 UDP Connection closed - exiting: read udp 127.0.0.1:4006: use of closed network connection
+2021/05/15 03:04:59 number of players in the room after adding:  1
+[negroni] 2021-05-15T03:04:59Z | 0 | 	 2.619321ms | 127.0.0.1:8080 | GET /demo/T6W1T1/SpaceTime
+2021/05/15 03:05:23 Data channel closed
+2021/05/15 03:05:23 Closing Error: websocket: close 1005 (no status)
+2021/05/15 03:05:23 closed ws conn
+2021/05/15 03:05:23 ws closing...
+2021/05/15 03:05:23 UDP Connection closed - exiting: read udp 127.0.0.1:5004: use of closed network connection
+2021/05/15 03:05:23 UDP Connection closed - exiting: read udp 127.0.0.1:4004: use of closed network connection
+[negroni] 2021-05-15T03:17:00Z | 404 | 	 142.433µs | 35.232.40.2 | GET /
+[negroni] 2021-05-15T03:17:01Z | 404 | 	 106.163µs | 35.232.40.2:8080 | GET /favicon.ico
