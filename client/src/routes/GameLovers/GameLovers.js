@@ -11,8 +11,8 @@ import {Transition, useStyles} from "../CreateRoom";
 const pb = require('./proto/signaling_pb');
 const input = require('./proto/input_pb');
 
-// const SERVER_ADDR = "34.94.73.231";
-const SERVER_ADDR = "w2.zoomgaming.app";
+// const SERVER_ADDR = "35.232.40.2";
+const SERVER_ADDR = "zoomgaming.app";
 
 const GameLovers = (props) => {
 

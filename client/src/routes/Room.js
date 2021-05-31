@@ -94,43 +94,41 @@ const Room = (props) => {
 
         const videoConstraints = { "width": 280, "height": 180 };
         navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true }).then(stream => {
-            if (userVideo.current && socketRef.current){
-                userVideo.current.srcObject = stream;
-                socketRef.current.emit("join room", roomID);
+            userVideo.current.srcObject = stream;
+            socketRef.current.emit("join room", roomID);
 
-                const peer = new Peer({
-                    initiator: false,
-                    trickle: false,
-                    stream: stream,
+            const peer = new Peer({
+                initiator: false,
+                trickle: false,
+                stream: stream,
+            });
+
+            peer.on('signal', signal => {
+                socketRef.current.emit('returning signal', signal);
+            });
+
+            peer.on('stream', stream => {
+                console.log('new stream');
+                setStreams(streams => [...streams, stream]);
+            });
+
+            peer.on('connect', () => {
+                console.log('connected')
+            })
+
+            socketRef.current.on("sending signal", signal => {
+                console.log('received signal from remote');
+                peer.signal(signal);
+            });
+
+            socketRef.current.on("user left", leavingStreamId => {
+                console.log('user left');
+                setStreams(streams => {
+                    return streams.filter(s => s.id !== leavingStreamId);
                 });
+            });
 
-                peer.on('signal', signal => {
-                    socketRef.current.emit('returning signal', signal);
-                });
-
-                peer.on('stream', stream => {
-                    console.log('new stream');
-                    setStreams(streams => [...streams, stream]);
-                });
-
-                peer.on('connect', () => {
-                    console.log('connected')
-                })
-
-                socketRef.current.on("sending signal", signal => {
-                    console.log('received signal from remote');
-                    peer.signal(signal);
-                });
-
-                socketRef.current.on("user left", leavingStreamId => {
-                    console.log('user left');
-                    setStreams(streams => {
-                        return streams.filter(s => s.id !== leavingStreamId);
-                    });
-                });
-
-                peerRef.current = peer;
-            }
+            peerRef.current = peer;
         })
 
         return function cleanup() {
