@@ -1,3 +1,3 @@
 # ZoomGaming
 
-[Video demonstration](https://www.youtube.com/watch?v=vvMR3JgxtRU&t=214s)
+[Video demonstration](https://youtu.be/UyHoOLDuX0U&t=214s)
